@@ -1,0 +1,109 @@
+---
+# Cilium Configuration for AWS EKS
+
+# EKS-specific: Use EKS API server endpoint
+# Replace with your EKS cluster API endpoint (without https://)
+# Example: ABCD1234.gr7.us-east-1.eks.amazonaws.com
+k8sServiceHost: "B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.comhttps://B0DD7F1153B323E9D7CD281706FD9414.grhttps://B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.com7.us-west-2.eks.amazonaws.com"
+k8sServicePort: "443"
+
+# EKS-specific: ENI mode for native AWS networking integration
+eni:
+  enabled: true
+  # Update with your cluster name
+  updateEC2AdapterLimitViaAPI: true
+  awsReleaseExcessIPs: true
+  gcTags:
+    io.cilium/cilium-managed: "true"
+    # Add cluster tag for ENI cleanup
+    kubernetes.io/cluster/my-cluster: "owned"
+
+# IPAM configuration for EKS with ENI mode
+ipam:
+  mode: "eni"
+  operator:
+    # These are automatically discovered from AWS VPC
+    clusterPoolIPv4PodCIDRList: []
+
+# Tunnel mode disabled for ENI mode (AWS native routing)
+routingMode: "native"
+tunnelProtocol: ""
+autoDirectNodeRoutes: false
+
+# EKS uses AWS CNI by default, Cilium replaces it
+cni:
+  exclusive: true
+  chainingMode: "none"
+
+# Enable kube-proxy replacement
+kubeProxyReplacement: true
+kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
+
+# Session affinity support
+sessionAffinity: true
+
+# Enable host-reachable services
+enableHostReachableServices: true
+
+# Install iptables rules for kube-proxy replacement
+installNoConntrackIptablesRules: true
+
+# BPF configuration
+bpf:
+  masquerade: true
+  tproxy: true
+
+enableBPFTProxy: true
+
+# AWS-specific: Enable masquerading for pod to external traffic
+enableIPv4Masquerade: true
+enableIPv6Masquerade: false
+
+# Network policies
+k8sNetworkPolicy:
+  enabled: true
+
+# Security settings
+encryption:
+  enabled: false
+  # For production, consider enabling WireGuard encryption:
+  # enabled: true
+  # type: wireguard
+
+# Health checking
+healthChecking: true
+
+# EKS-specific: Enable AWS metadata support
+enableIPv4EgressGateway: false
+
+# Hubble for observability
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  metrics:
+    enabled:
+      - dns
+      - drop
+      - tcp
+      - flow
+      - icmp
+      - http
+
+# Operator configuration
+operator:
+  replicas: 2
+
+# AWS-specific: Enable endpoint routes for better performance
+enableEndpointRoutes: true
+
+# Socket LB
+socketLB:
+  enabled: true
+  hostNamespaceOnly: false
+
+# IPv4 native routing CIDR (your VPC CIDR)
+# Replace with your VPC CIDR block
+ipv4NativeRoutingCIDR: "10.0.0.0/16"
