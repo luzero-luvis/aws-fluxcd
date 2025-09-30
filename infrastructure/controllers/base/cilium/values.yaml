@@ -4,8 +4,8 @@
 
 # Kubernetes API server (control plane) endpoint
 # Use only the DNS, no https:// prefix
-k8sServiceHost: "B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.com"
-k8sServicePort: "443"
+k8sServiceHost: "127.0.0.1"
+k8sServicePort: "6443"
 
 # Enable AWS ENI mode for native networking
 eni:
