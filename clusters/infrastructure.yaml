@@ -12,7 +12,12 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/cilium
   prune: false
-
+  wait: true
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: DaemonSet
+      name: cilium
+      namespace: kube-system
 --- 
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
@@ -24,7 +29,6 @@ spec:
   ref:
     tag: v0.18.0
   url: https://github.com/external-secrets/external-secrets
-
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -38,7 +42,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: external-secrets
-
+  wait: true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -49,7 +53,6 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
-  wait: false
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -57,7 +60,23 @@ spec:
     - name: external-secrets-crds
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
-
+  wait: true
+  # Add health checks to ensure webhook is ready before validation
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: external-secrets-webhook
+      namespace: external-secrets
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: external-secrets
+      namespace: external-secrets
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: external-secrets-cert-controller
+      namespace: external-secrets
+  # Use server-side validation to avoid webhook timing issues
+  validation: server
 --- 
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -68,7 +87,6 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
-  wait: false
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -76,3 +94,4 @@ spec:
     - name: external-secrets
   path: ./infrastructure/controllers/prod-cluster/
   prune: true
+  wait: true
