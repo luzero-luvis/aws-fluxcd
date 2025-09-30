@@ -1,0 +1,31 @@
+provider:
+  name: digitalocean
+
+policy: upsert-only
+
+env:
+  - name: DO_TOKEN
+    valueFrom:
+      secretKeyRef:
+        name: do-token
+        key: DO_TOKEN
+
+domainFilters:
+  - sirpi.co.in
+  - sirpify.com
+
+txtPrefix: externaldns-
+
+managedRecordTypes:
+  - A
+
+#logLevel: debug
+
+interval: 1h
+
+sources:
+  - service
+  - ingress
+  - gateway-httproute
+  - gateway-grpcroute
+  - gateway-tcproute
