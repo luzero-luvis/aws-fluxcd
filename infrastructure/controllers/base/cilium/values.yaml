@@ -1,61 +1,55 @@
----
-# Cilium Configuration for AWS EKS
+# =========================================================
+# Cilium Helm Values for AWS EKS with ENI mode
+# =========================================================
 
-# EKS-specific: Use EKS API server endpoint
-# Replace with your EKS cluster API endpoint (without https://)
-# Example: ABCD1234.gr7.us-east-1.eks.amazonaws.com
-k8sServiceHost: "B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.comhttps://B0DD7F1153B323E9D7CD281706FD9414.grhttps://B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.com7.us-west-2.eks.amazonaws.com"
+# Kubernetes API server (control plane) endpoint
+# Use only the DNS, no https:// prefix
+k8sServiceHost: "B0DD7F1153B323E9D7CD281706FD9414.gr7.us-west-2.eks.amazonaws.com"
 k8sServicePort: "443"
 
-# EKS-specific: ENI mode for native AWS networking integration
+# Enable AWS ENI mode for native networking
 eni:
   enabled: true
-  # Update with your cluster name
   updateEC2AdapterLimitViaAPI: true
   awsReleaseExcessIPs: true
   gcTags:
     io.cilium/cilium-managed: "true"
-    # Add cluster tag for ENI cleanup
     kubernetes.io/cluster/my-cluster: "owned"
 
-# IPAM configuration for EKS with ENI mode
+# IPAM configuration for ENI mode
 ipam:
   mode: "eni"
   operator:
-    # These are automatically discovered from AWS VPC
-    clusterPoolIPv4PodCIDRList: []
+    # Use your VPC CIDR for pod allocation
+    clusterPoolIPv4PodCIDRList:
+      - "10.0.0.0/16"
 
-# Tunnel mode disabled for ENI mode (AWS native routing)
+# Routing and tunnel mode
 routingMode: "native"
 tunnelProtocol: ""
 autoDirectNodeRoutes: false
 
-# EKS uses AWS CNI by default, Cilium replaces it
+# CNI configuration
 cni:
   exclusive: true
   chainingMode: "none"
 
 # Enable kube-proxy replacement
-kubeProxyReplacement: true
+kubeProxyReplacement: strict
 kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
+
+# Enable host-reachable services for API server → ClusterIP reachability
+enableHostReachableServices: true
 
 # Session affinity support
 sessionAffinity: true
 
-# Enable host-reachable services
-enableHostReachableServices: true
-
-# Install iptables rules for kube-proxy replacement
-installNoConntrackIptablesRules: true
-
-# BPF configuration
+# IP masquerading and BPF proxy
 bpf:
   masquerade: true
   tproxy: true
 
 enableBPFTProxy: true
-
-# AWS-specific: Enable masquerading for pod to external traffic
 enableIPv4Masquerade: true
 enableIPv6Masquerade: false
 
@@ -63,20 +57,17 @@ enableIPv6Masquerade: false
 k8sNetworkPolicy:
   enabled: true
 
-# Security settings
+# Security / encryption (WireGuard optional)
 encryption:
   enabled: false
-  # For production, consider enabling WireGuard encryption:
-  # enabled: true
-  # type: wireguard
 
 # Health checking
 healthChecking: true
 
-# EKS-specific: Enable AWS metadata support
-enableIPv4EgressGateway: false
+# IPv4 native routing CIDR (your VPC CIDR)
+ipv4NativeRoutingCIDR: "10.0.0.0/16"
 
-# Hubble for observability
+# Hubble observability
 hubble:
   enabled: true
   relay:
@@ -96,14 +87,11 @@ hubble:
 operator:
   replicas: 2
 
-# AWS-specific: Enable endpoint routes for better performance
+# Endpoint routing for better performance
 enableEndpointRoutes: true
 
-# Socket LB
+# Socket load balancing
 socketLB:
   enabled: true
   hostNamespaceOnly: false
 
-# IPv4 native routing CIDR (your VPC CIDR)
-# Replace with your VPC CIDR block
-ipv4NativeRoutingCIDR: "10.0.0.0/16"

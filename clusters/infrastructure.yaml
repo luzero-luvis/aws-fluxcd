@@ -12,6 +12,7 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/cilium
   prune: false
+
 --- 
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
@@ -23,6 +24,7 @@ spec:
   ref:
     tag: v0.18.0
   url: https://github.com/external-secrets/external-secrets
+
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -36,6 +38,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: external-secrets
+
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -54,11 +57,7 @@ spec:
     - name: external-secrets-crds
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: external-secrets-webhook
-      namespace: external-secrets
+
 --- 
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -75,5 +74,5 @@ spec:
     name: flux-system
   dependsOn:
     - name: external-secrets
-  path: ./infrastructure/controllers/base/
+  path: ./infrastructure/controllers/prod-cluster/
   prune: true
