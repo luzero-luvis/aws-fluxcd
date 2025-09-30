@@ -92,6 +92,6 @@ spec:
     name: flux-system
   dependsOn:
     - name: external-secrets
-  path: ./infrastructure/controllers/prod-cluster/
+  path: ./infrastructure/controllers/base/
   prune: true
   wait: true
