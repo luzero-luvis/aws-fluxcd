@@ -46,7 +46,6 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
-  validation: client  # Add this
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -54,7 +53,7 @@ spec:
     - name: external-secrets-crds
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
-  healthChecks:  # Add this to ensure webhook is ready
+  healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
       name: external-secrets-webhook
@@ -69,7 +68,6 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
-  validation: client  # Add this - IMPORTANT!
   sourceRef:
     kind: GitRepository
     name: flux-system
