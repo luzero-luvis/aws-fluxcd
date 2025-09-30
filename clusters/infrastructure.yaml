@@ -46,6 +46,7 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
+  wait: false
   sourceRef:
     kind: GitRepository
     name: flux-system
@@ -68,6 +69,7 @@ spec:
   interval: 1h
   retryInterval: 1m
   timeout: 5m
+  wait: false
   sourceRef:
     kind: GitRepository
     name: flux-system
