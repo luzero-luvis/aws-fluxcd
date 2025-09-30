@@ -12,3 +12,47 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/cilium
   prune: false
+
+--- 
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: external-secrets
+  namespace: flux-system
+spec:
+  interval: 10m
+  ref:
+    tag: v0.20.0
+  url: https://github.com/external-secrets/external-secrets
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: external-secrets-crds
+  namespace: flux-system
+spec:
+  interval: 10m
+  path: ./deploy/crds
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: external-secrets
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: external-secrets
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: external-secrets-crds
+  path: ./infrastructure/controllers/base/external-secrets
+  prune: true
