@@ -79,7 +79,7 @@ spec:
   force: true
 --- 
 apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
+ a  h kind: Kustomization
 metadata:
   name: infra-controllers
   namespace: flux-system
