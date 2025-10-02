@@ -118,6 +118,6 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./infrastructure/controllers/longhorn
+  path: ./infrastructure/controllers/base/longhorn
   prune: false
 
