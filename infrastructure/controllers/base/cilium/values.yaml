@@ -1,97 +1,544 @@
 # =========================================================
-# Cilium Helm Values for AWS EKS with ENI mode
+# Cilium Helm Values for AWS EKS with CNI Chaining Mode
+# Optimized for eksctl and Production Use
+# Version: 1.18.0
 # =========================================================
 
-# Kubernetes API server (control plane) endpoint
-# Use only the DNS, no https:// prefix
-k8sServiceHost: "127.0.0.1"
-k8sServicePort: "6443"
+# =========================================================
+# Cluster Identity
+# =========================================================
+cluster:
+  name: k8s-cluster
+  id: 0
 
-# Enable AWS ENI mode for native networking
-eni:
-  enabled: true
-  updateEC2AdapterLimitViaAPI: true
-  awsReleaseExcessIPs: true
-  gcTags:
-    io.cilium/cilium-managed: "true"
-    kubernetes.io/cluster/my-cluster: "owned"
+# =========================================================
+# Kubernetes API Server Endpoint
+# CRITICAL: Replace with your actual API server hostname
+# Get it: kubectl cluster-info | grep "control plane"
+# Or: aws eks describe-cluster --name <cluster-name> --query "cluster.endpoint" --output text
+# =========================================================
+k8sServiceHost: "25E11B300481DFDCAF418361D3B36C3D.gr7.us-west-2.eks.amazonaws.com"
+k8sServicePort: "443"
 
-# IPAM configuration for ENI mode
-ipam:
-  mode: "eni"
-  operator:
-    # Use your VPC CIDR for pod allocation
-    clusterPoolIPv4PodCIDRList:
-      - "10.0.0.0/16"
-
-# Routing and tunnel mode
-routingMode: "native"
-tunnelProtocol: ""
-autoDirectNodeRoutes: false
-
-# CNI configuration
+# =========================================================
+# CNI Chaining Configuration - AWS VPC-CNI Integration
+# =========================================================
 cni:
-  exclusive: true
-  chainingMode: "none"
+  install: true
+  chainingMode: "aws-cni"  # Chain with AWS VPC-CNI
+  exclusive: false          # Allow coexistence with VPC-CNI
+  binPath: "/opt/cni/bin"
+  confPath: "/etc/cni/net.d"
+  chainingTarget: "aws-cni"
 
-# Enable kube-proxy replacement
-kubeProxyReplacement: strict
-kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
-
-# Enable host-reachable services for API server → ClusterIP reachability
-enableHostReachableServices: true
-
-# Session affinity support
-sessionAffinity: true
-
-# IP masquerading and BPF proxy
-bpf:
-  masquerade: true
-  tproxy: true
-
-enableBPFTProxy: true
-enableIPv4Masquerade: true
-enableIPv6Masquerade: false
-
-# Network policies
-k8sNetworkPolicy:
-  enabled: true
-
-# Security / encryption (WireGuard optional)
-encryption:
+# =========================================================
+# ENI Mode - DISABLED (using CNI chaining instead)
+# =========================================================
+eni:
   enabled: false
 
-# Health checking
+# =========================================================
+# IPAM Configuration - Delegated to VPC-CNI
+# =========================================================
+ipam:
+  mode: "delegated-plugin"  # Changed from cluster-pool to delegated-plugin for AWS CNI chaining
+
+# =========================================================
+# Routing Configuration
+# =========================================================
+routingMode: "native"
+tunnel: "disabled"
+autoDirectNodeRoutes: false
+ipv4NativeRoutingCIDR: "10.0.0.0/16"  # Match your VPC CIDR
+
+# =========================================================
+# Masquerading - Disabled (VPC-CNI handles this)
+# =========================================================
+enableIPv4Masquerade: false
+enableIPv6Masquerade: false
+
+bpf:
+  masquerade: false
+  tproxy: true
+  clockProbe: false
+  preallocateMaps: false
+  lbMapMax: 65536
+  # BPF host routing for better performance
+  hostLegacyRouting: false
+
+# =========================================================
+# Kube-proxy Replacement - DISABLED for EKS with VPC-CNI
+# Not recommended with CNI chaining mode
+# =========================================================
+kubeProxyReplacement: "false"
+
+# =========================================================
+# Network Policy
+# =========================================================
+policyEnforcementMode: "default"
+
+# =========================================================
+# Endpoint Routes - Performance Optimization
+# =========================================================
+endpointRoutes:
+  enabled: true
+
+# =========================================================
+# Socket Load Balancing
+# =========================================================
+socketLB:
+  enabled: false  # Disabled for CNI chaining compatibility
+
+# =========================================================
+# BPF Features
+# =========================================================
+enableBPFTProxy: false  # Disabled for CNI chaining
+installIptablesRules: true
+
+# =========================================================
+# IPv4/IPv6 Configuration
+# =========================================================
+ipv4:
+  enabled: true
+
+ipv6:
+  enabled: false
+
+# =========================================================
+# Security & Encryption
+# =========================================================
+encryption:
+  enabled: false
+  type: "wireguard"
+  nodeEncryption: false
+
+# =========================================================
+# Health Checking
+# =========================================================
 healthChecking: true
+healthPort: 9879
 
-# IPv4 native routing CIDR (your VPC CIDR)
-ipv4NativeRoutingCIDR: "10.0.0.0/16"
+endpointHealthChecking:
+  enabled: true
 
-# Hubble observability
+# =========================================================
+# Hubble Observability - Network Visibility
+# =========================================================
 hubble:
   enabled: true
+  
   relay:
     enabled: true
+    replicas: 1
+    image:
+      repository: quay.io/cilium/hubble-relay
+      tag: v1.18.0
+      useDigest: false
+      pullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 64Mi
+    
   ui:
     enabled: true
+    replicas: 1
+    backend:
+      image:
+        repository: quay.io/cilium/hubble-ui-backend
+        tag: v0.13.1
+        pullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 64Mi
+    frontend:
+      image:
+        repository: quay.io/cilium/hubble-ui
+        tag: v0.13.1
+        pullPolicy: IfNotPresent
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1024Mi
+        requests:
+          cpu: 100m
+          memory: 64Mi
+    ingress:
+      enabled: false
+      className: "alb"  # Use ALB ingress if enabled
+      annotations: {}
+  
   metrics:
     enabled:
-      - dns
+      - dns:query;ignoreAAAA
       - drop
       - tcp
       - flow
       - icmp
       - http
+    serviceMonitor:
+      enabled: false  # Enable if using Prometheus Operator
+    dashboards:
+      enabled: false  # Enable if using Grafana
+    port: 9965
+  
+  tls:
+    enabled: true
+    auto:
+      enabled: true
+      method: helm
+      certValidityDuration: 1095  # 3 years
 
-# Operator configuration
+# =========================================================
+# Operator Configuration
+# =========================================================
 operator:
-  replicas: 2
-
-# Endpoint routing for better performance
-enableEndpointRoutes: true
-
-# Socket load balancing
-socketLB:
   enabled: true
-  hostNamespaceOnly: false
+  replicas: 2  # HA setup for production
+  
+  image:
+    repository: quay.io/cilium/operator
+    tag: v1.18.0
+    useDigest: false
+    pullPolicy: IfNotPresent
+  
+  prometheus:
+    enabled: true
+    port: 9963
+    serviceMonitor:
+      enabled: false
+  
+  # Resource management
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Garbage collection intervals
+  endpointGCInterval: "5m0s"
+  identityGCInterval: "15m0s"
+  identityHeartbeatTimeout: "30m0s"
+  
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  
+  # Anti-affinity for HA
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            io.cilium/app: operator
+        topologyKey: kubernetes.io/hostname
 
+# =========================================================
+# Agent Configuration
+# =========================================================
+image:
+  repository: quay.io/cilium/cilium
+  tag: v1.18.0
+  useDigest: false
+  pullPolicy: IfNotPresent
+
+# Anti-affinity for agents
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchLabels:
+          k8s-app: cilium
+      topologyKey: kubernetes.io/hostname
+
+priorityClassName: "system-node-critical"
+
+# =========================================================
+# Resources - Adjust based on cluster size
+# Small: 100m CPU, 512Mi RAM
+# Medium: 200m CPU, 1Gi RAM
+# Large: 500m CPU, 2Gi RAM
+# =========================================================
+resources:
+  limits:
+    cpu: 4000m
+    memory: 4Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+# =========================================================
+# Tolerations - Run on all nodes including control plane
+# =========================================================
+tolerations:
+  - operator: Exists
+
+# =========================================================
+# Update Strategy
+# =========================================================
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 2
+
+# =========================================================
+# Pod Disruption Budget
+# =========================================================
+podDisruptionBudget:
+  enabled: true
+  maxUnavailable: 2
+  minAvailable: null
+
+# =========================================================
+# Monitoring & Metrics
+# =========================================================
+prometheus:
+  enabled: true
+  port: 9962
+  serviceMonitor:
+    enabled: false  # Enable if using Prometheus Operator
+    labels: {}
+    annotations: {}
+
+# =========================================================
+# Identity Management
+# =========================================================
+identityAllocationMode: "crd"
+identityGCInterval: "15m0s"
+identityHeartbeatTimeout: "30m0s"
+
+# =========================================================
+# Debug & Logging
+# =========================================================
+debug:
+  enabled: false
+  # verbose: "flow"
+
+logSystemLoad: false
+
+# =========================================================
+# Service Accounts
+# =========================================================
+serviceAccounts:
+  cilium:
+    create: true
+    name: "cilium"
+    annotations: {}
+  operator:
+    create: true
+    name: "cilium-operator"
+    annotations: {}
+  relay:
+    create: true
+  ui:
+    create: true
+
+# =========================================================
+# RBAC
+# =========================================================
+rbac:
+  create: true
+
+# =========================================================
+# Node Port Configuration
+# =========================================================
+nodePort:
+  enabled: true
+  bindProtection: true
+  autoProtectPortRange: true
+  enableHealthCheck: true
+
+# =========================================================
+# External IPs
+# =========================================================
+externalIPs:
+  enabled: true
+
+# =========================================================
+# Host Firewall - Optional security feature
+# =========================================================
+hostFirewall:
+  enabled: false
+
+# =========================================================
+# L7 Proxy
+# =========================================================
+l7Proxy: true
+
+proxy:
+  prometheus:
+    enabled: true
+    port: "9964"
+  sidecarImageRegex: "cilium/istio_proxy"
+
+# =========================================================
+# Clean State - KEEP FALSE for upgrades
+# Set to true ONLY for fresh installs or when troubleshooting
+# =========================================================
+cleanBpfState: false
+cleanState: false
+
+# =========================================================
+# TLS Configuration
+# =========================================================
+tls:
+  enabled: true
+  secretsBackend: "local"
+  caBundle:
+    enabled: false
+
+# =========================================================
+# Container Runtime
+# =========================================================
+containerRuntime:
+  integration: "containerd"
+
+# =========================================================
+# Cloud Provider Specific
+# =========================================================
+azure:
+  enabled: false
+
+gke:
+  enabled: false
+
+aks:
+  enabled: false
+
+# =========================================================
+# Additional Features
+# =========================================================
+bandwidthManager:
+  enabled: false  # Enable for bandwidth management
+
+localRedirectPolicy: false
+
+enableCriticalPriorityClass: true
+
+# BBR congestion control
+enableBBR: false
+
+# =========================================================
+# Node Init - Usually not needed for EKS managed nodes
+# =========================================================
+nodeinit:
+  enabled: false
+
+# =========================================================
+# Preflight - Useful for validating before upgrades
+# =========================================================
+preflight:
+  enabled: false
+  image:
+    repository: quay.io/cilium/cilium
+    tag: v1.18.0
+
+# =========================================================
+# etcd - Not needed (using CRD mode)
+# =========================================================
+etcd:
+  enabled: false
+  managed: false
+
+# =========================================================
+# Cluster Mesh - For multi-cluster connectivity
+# =========================================================
+clustermesh:
+  useAPIServer: false
+  apiserver:
+    replicas: 1
+
+externalWorkloads:
+  enabled: false
+
+# =========================================================
+# BGP Control Plane - Advanced routing
+# =========================================================
+bgpControlPlane:
+  enabled: false
+
+# =========================================================
+# Ingress Controller
+# =========================================================
+ingressController:
+  enabled: false
+  default: false
+
+# =========================================================
+# Gateway API
+# =========================================================
+gatewayAPI:
+  enabled: false
+
+# =========================================================
+# Service Mesh Features
+# =========================================================
+authentication:
+  mutual:
+    spire:
+      enabled: false
+
+# =========================================================
+# Envoy Config
+# =========================================================
+envoy:
+  enabled: true
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# =========================================================
+# Rate Limiting
+# =========================================================
+rateLimit:
+  enabled: false
+
+# =========================================================
+# EKS-Specific Settings
+# =========================================================
+# Disable features that conflict with AWS VPC-CNI
+disableEnvoyVersionCheck: false
+
+# Security context
+securityContext:
+  capabilities:
+    ciliumAgent:
+      - CHOWN
+      - KILL
+      - NET_ADMIN
+      - NET_RAW
+      - IPC_LOCK
+      - SYS_ADMIN
+      - SYS_RESOURCE
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    cleanCiliumState:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+
+# =========================================================
+# Wait for kube-proxy removal (if replacing kube-proxy)
+# =========================================================
+waitForKubeProxy: false
+
+# =========================================================
+# END OF CONFIGURATION
+# =========================================================
