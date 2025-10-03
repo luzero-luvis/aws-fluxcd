@@ -1,8 +1,5 @@
-# Cilium 1.18.2 Configuration for AWS EKS
-# Install:
-# helm install cilium cilium/cilium --version 1.18.2 -f cilium-values.yaml -n kube-system
-
-# Disable ENI IPAM (let Cilium manage pod IPs)
+# Cilium 1.18.2 Configuration for AWS EKS with kube-proxy Replacement
+# Disable AWS VPC CNI (Cilium will manage pod IPs)
 eni:
   enabled: false
 
@@ -11,43 +8,96 @@ ipam:
   mode: cluster-pool
   operator:
     clusterPoolIPv4PodCIDRList:
-      - "10.244.0.0/16"   # total pod IP range for cluster
-    clusterPoolIPv4MaskSize: 24  # each node gets /24 (256 IPs)
+      - "10.244.0.0/16"
+    clusterPoolIPv4MaskSize: 24
 
 # Overlay network (VXLAN)
 routingMode: tunnel
-tunnel: vxlan
+tunnelProtocol: vxlan
 
 # Masquerade outbound traffic
 egressMasqueradeInterfaces: eth0
+ipMasqAgent:
+  enabled: false
+enableIPv4Masquerade: true
 
 # Enable endpoint routes
 endpointRoutes:
   enabled: true
 
-# Replace kube-proxy
+# kube-proxy replacement - CRITICAL CONFIGURATION
 kubeProxyReplacement: true
+kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
 
-# Kubernetes API Server Configuration
+# EKS API server endpoint - REQUIRED for kube-proxy replacement
 k8sServiceHost: "70F5A1222EC56EB5FA79F50318312C99.gr7.us-west-2.eks.amazonaws.com"
 k8sServicePort: "443"
+
+# Socket-based load balancing - REQUIRED for service connectivity
+socketLB:
+  enabled: true
+  hostNamespaceOnly: false
+
+# Host-reachable services - REQUIRED for CoreDNS and pod-to-service communication
+enableHostLegacyRouting: false
+hostServices:
+  enabled: true
+  protocols: tcp,udp
+
+# Node port configuration
+nodePort:
+  enabled: true
+  bindProtection: true
+
+# Session affinity
+sessionAffinity: true
+
+# BPF masquerade for better performance
+bpf:
+  masquerade: true
+  lbExternalClusterIP: false
+
+# Increase pod limits (not restricted by ENI limits)
+k8s:
+  requireIPv4PodCIDR: true
+
+# Resource limits for Cilium agent
+resources:
+  limits:
+    memory: 500Mi
+  requests:
+    cpu: 100m
+    memory: 200Mi
+
+# Operator Configuration
+operator:
+  replicas: 2
+  resources:
+    limits:
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: false
 
 # Prometheus Metrics
 prometheus:
   enabled: true
-
-# Operator Configuration
-operator:
-  prometheus:
-    enabled: true
+  serviceMonitor:
+    enabled: false
 
 # Hubble Observability
 hubble:
   enabled: true
   relay:
     enabled: true
+    replicas: 1
   ui:
     enabled: true
+    replicas: 1
   metrics:
     enabled:
       - dns
@@ -57,4 +107,3 @@ hubble:
       - port-distribution
       - icmp
       - "httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction"
-
