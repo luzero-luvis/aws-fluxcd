@@ -1,19 +1,27 @@
 # Cilium 1.18.2 Configuration for AWS EKS
-# Install: helm install cilium cilium/cilium --version 1.18.2 -f cilium-values.yaml -n kube-system
+# Install:
+# helm install cilium cilium/cilium --version 1.18.2 -f cilium-values.yaml -n kube-system
 
-# AWS ENI Configuration
+# Disable ENI IPAM (let Cilium manage pod IPs)
 eni:
-  enabled: true
+  enabled: false
 
+# Cluster-pool IPAM (Cilium-managed pod IPs)
 ipam:
-  mode: eni
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - "10.244.0.0/16"   # total pod IP range for cluster
+    clusterPoolIPv4MaskSize: 24  # each node gets /24 (256 IPs)
 
-# Egress Masquerading
+# Overlay network (VXLAN)
+routingMode: tunnel
+tunnel: vxlan
+
+# Masquerade outbound traffic
 egressMasqueradeInterfaces: eth0
 
-# Native Routing (no tunneling)
-routingMode: native
-
+# Enable endpoint routes
 endpointRoutes:
   enabled: true
 
@@ -21,7 +29,6 @@ endpointRoutes:
 kubeProxyReplacement: true
 
 # Kubernetes API Server Configuration
-# IMPORTANT: Replace with your actual EKS API endpoint
 k8sServiceHost: "70F5A1222EC56EB5FA79F50318312C99.gr7.us-west-2.eks.amazonaws.com"
 k8sServicePort: "443"
 
@@ -37,13 +44,10 @@ operator:
 # Hubble Observability
 hubble:
   enabled: true
-  
   relay:
     enabled: true
-  
   ui:
     enabled: true
-  
   metrics:
     enabled:
       - dns
@@ -53,3 +57,4 @@ hubble:
       - port-distribution
       - icmp
       - "httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction"
+
