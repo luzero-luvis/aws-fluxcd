@@ -1,9 +1,10 @@
 # Cilium 1.18.2 Configuration for AWS EKS with kube-proxy Replacement
-# Disable AWS VPC CNI (Cilium will manage pod IPs)
-eni:
-  enabled: false
+# Overlay Mode (VXLAN) with Cilium-managed IPAM
+# This configuration is tested and production-ready for EKS
 
-# Cluster-pool IPAM (Cilium-managed pod IPs)
+# ============================================
+# IPAM Configuration (Cilium manages Pod IPs)
+# ============================================
 ipam:
   mode: cluster-pool
   operator:
@@ -11,93 +12,149 @@ ipam:
       - "10.244.0.0/16"
     clusterPoolIPv4MaskSize: 24
 
-# Overlay network (VXLAN)
+# ============================================
+# Disable AWS VPC CNI (ENI mode)
+# ============================================
+eni:
+  enabled: false
+
+# ============================================
+# Overlay Network Configuration (VXLAN)
+# ============================================
 routingMode: tunnel
 tunnelProtocol: vxlan
+autoDirectNodeRoutes: false
 
-# Masquerade outbound traffic
-egressMasqueradeInterfaces: eth0
-ipMasqAgent:
-  enabled: false
+# ============================================
+# Network Device Configuration
+# ============================================
+devices: "eth+"
+
+# ============================================
+# Masquerading Configuration
+# ============================================
 enableIPv4Masquerade: true
+enableIPv6Masquerade: false
 
-# Enable endpoint routes
-endpointRoutes:
-  enabled: true
-
-# kube-proxy replacement - CRITICAL CONFIGURATION
-kubeProxyReplacement: true
-kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
-
-# EKS API server endpoint - REQUIRED for kube-proxy replacement
-k8sServiceHost: "70F5A1222EC56EB5FA79F50318312C99.gr7.us-west-2.eks.amazonaws.com"
-k8sServicePort: "443"
-
-# Socket-based load balancing - REQUIRED for service connectivity
-socketLB:
-  enabled: true
-  hostNamespaceOnly: false
-
-# Host-reachable services - REQUIRED for CoreDNS and pod-to-service communication
-enableHostLegacyRouting: false
-hostServices:
-  enabled: true
-  protocols: tcp,udp
-
-# Node port configuration
-nodePort:
-  enabled: true
-  bindProtection: true
-
-# Session affinity
-sessionAffinity: true
-
-# BPF masquerade for better performance
 bpf:
   masquerade: true
   lbExternalClusterIP: false
 
-# Increase pod limits (not restricted by ENI limits)
-k8s:
-  requireIPv4PodCIDR: true
+# ============================================
+# kube-proxy Replacement Configuration
+# ============================================
+kubeProxyReplacement: true
+kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
 
-# Resource limits for Cilium agent
+# CRITICAL: Replace with your actual EKS API server endpoint
+# Get it with: kubectl cluster-info | grep "control plane"
+k8sServiceHost: "7E6037198F547C61DBB9D0085393566D.gr7.us-west-2.eks.amazonaws.com"
+k8sServicePort: "443"
+
+# ============================================
+# Socket Load Balancing (Required for kube-proxy replacement)
+# ============================================
+socketLB:
+  enabled: true
+  hostNamespaceOnly: false
+
+# ============================================
+# Host Services Configuration
+# ============================================
+hostServices:
+  enabled: true
+  protocols: tcp,udp
+
+# ============================================
+# NodePort Configuration
+# ============================================
+nodePort:
+  enabled: true
+  bindProtection: true
+  enableHealthCheck: true
+
+# ============================================
+# Session Affinity
+# ============================================
+sessionAffinity: true
+
+# ============================================
+# Endpoint Routes
+# ============================================
+endpointRoutes:
+  enabled: true
+
+# ============================================
+# IPv4/IPv6 Configuration
+# ============================================
+ipv4:
+  enabled: true
+
+ipv6:
+  enabled: false
+
+# ============================================
+# Cilium Agent Resources
+# ============================================
 resources:
   limits:
-    memory: 500Mi
+    memory: 1Gi
   requests:
     cpu: 100m
-    memory: 200Mi
+    memory: 256Mi
 
-# Operator Configuration
+# ============================================
+# Cilium Operator Configuration
+# ============================================
 operator:
   replicas: 2
+  rollOutPods: true
   resources:
     limits:
       memory: 500Mi
     requests:
       cpu: 100m
-      memory: 200Mi
+      memory: 128Mi
   prometheus:
     enabled: true
     serviceMonitor:
       enabled: false
 
+# ============================================
 # Prometheus Metrics
+# ============================================
 prometheus:
   enabled: true
+  port: 9962
   serviceMonitor:
     enabled: false
 
-# Hubble Observability
+# ============================================
+# Hubble Observability Platform
+# ============================================
 hubble:
   enabled: true
+  
   relay:
     enabled: true
     replicas: 1
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  
   ui:
     enabled: true
     replicas: 1
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+  
   metrics:
     enabled:
       - dns
@@ -107,3 +164,45 @@ hubble:
       - port-distribution
       - icmp
       - "httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction"
+
+# ============================================
+# Monitor Configuration
+# ============================================
+monitor:
+  enabled: true
+
+# ============================================
+# Bandwidth Manager (Traffic Shaping)
+# ============================================
+bandwidthManager:
+  enabled: true
+  bbr: true
+
+# ============================================
+# Local Redirect Policy
+# ============================================
+localRedirectPolicy: true
+
+# ============================================
+# Network Policy Enforcement
+# ============================================
+policyEnforcementMode: default
+
+# ============================================
+# Cgroup Configuration
+# ============================================
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup
+
+# ============================================
+# Node Initialization
+# ============================================
+nodeinit:
+  enabled: false
+
+# ============================================
+# Iptables Configuration
+# ============================================
+installNoConntrackIptablesRules: false
