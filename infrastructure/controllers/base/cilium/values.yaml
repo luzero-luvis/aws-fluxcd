@@ -1,208 +1,66 @@
-# Cilium 1.18.2 Configuration for AWS EKS with kube-proxy Replacement
-# Overlay Mode (VXLAN) with Cilium-managed IPAM
-# This configuration is tested and production-ready for EKS
+# Cilium configuration for AWS EC2 (kubeadm + Istio Gateway API)
 
-# ============================================
-# IPAM Configuration (Cilium manages Pod IPs)
-# ============================================
-ipam:
-  mode: cluster-pool
-  operator:
-    clusterPoolIPv4PodCIDRList:
-      - "10.244.0.0/16"
-    clusterPoolIPv4MaskSize: 24
+# API Server connectivity
+k8sServiceHost: "10.0.100.116"
+k8sServicePort: "6443"
 
-# ============================================
-# Disable AWS VPC CNI (ENI mode)
-# ============================================
-eni:
-  enabled: false
+# Use native routing in AWS
+routingMode: "native"          # AWS supports direct routing between subnets
+autoDirectNodeRoutes: true
+devices: "eth0"                # Usually 'eth0' on AWS instances
 
-# ============================================
-# Overlay Network Configuration (VXLAN)
-# ============================================
-routingMode: tunnel
-tunnelProtocol: vxlan
-autoDirectNodeRoutes: false
-
-# ============================================
-# Network Device Configuration
-# ============================================
-devices: "eth+"
-
-# ============================================
-# Masquerading Configuration
-# ============================================
-enableIPv4Masquerade: true
-enableIPv6Masquerade: false
-
-bpf:
-  masquerade: true
-  lbExternalClusterIP: false
-
-# ============================================
-# kube-proxy Replacement Configuration
-# ============================================
-kubeProxyReplacement: true
+# Kube-proxy replacement
+kubeProxyReplacement: "strict"
 kubeProxyReplacementHealthzBindAddr: "0.0.0.0:10256"
 
-# CRITICAL: Replace with your actual EKS API server endpoint
-# Get it with: kubectl cluster-info | grep "control plane"
-k8sServiceHost: "7E6037198F547C61DBB9D0085393566D.gr7.us-west-2.eks.amazonaws.com"
-k8sServicePort: "443"
+# IPAM configuration - use cluster-pool mode, matching your kubeadm Pod CIDR
+ipam:
+  mode: "cluster-pool"
+  operator:
+    clusterPoolIPv4PodCIDRList: ["10.244.0.0/16"]
 
-# ============================================
-# Socket Load Balancing (Required for kube-proxy replacement)
-# ============================================
-socketLB:
-  enabled: true
-  hostNamespaceOnly: false
-
-# ============================================
-# Host Services Configuration
-# ============================================
-hostServices:
-  enabled: true
-  protocols: tcp,udp
-
-# ============================================
-# NodePort Configuration
-# ============================================
+# NodePort configuration - use AWS VPC CIDR range
 nodePort:
   enabled: true
-  bindProtection: true
-  enableHealthCheck: true
+  addresses: ["auto"]          # Automatically detects primary VPC interface
 
-# ============================================
-# Session Affinity
-# ============================================
-sessionAffinity: true
+# BPF and TPROXY settings for Istio
+bpf:
+  masquerade: true
+  tproxy: true
+enableBPFTProxy: true
 
-# ============================================
-# Endpoint Routes
-# ============================================
-endpointRoutes:
+# CNI configuration
+cni:
+  exclusive: true
+
+# Socket load balancer - keeps traffic local to the host namespace
+socketLB:
+  hostNamespaceOnly: true
+
+# Network policies
+k8sNetworkPolicy:
   enabled: true
 
-# ============================================
-# IPv4/IPv6 Configuration
-# ============================================
-ipv4:
-  enabled: true
+# Encryption
+encryption:
+  enabled: false                # Optional: AWS already isolates VPC traffic
 
-ipv6:
-  enabled: false
+# Health checking
+healthChecking: true
 
-# ============================================
-# Cilium Agent Resources
-# ============================================
-resources:
-  limits:
-    memory: 1Gi
-  requests:
-    cpu: 100m
-    memory: 256Mi
-
-# ============================================
-# Cilium Operator Configuration
-# ============================================
-operator:
-  replicas: 2
-  rollOutPods: true
-  resources:
-    limits:
-      memory: 500Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
-  prometheus:
-    enabled: true
-    serviceMonitor:
-      enabled: false
-
-# ============================================
-# Prometheus Metrics
-# ============================================
-prometheus:
-  enabled: true
-  port: 9962
-  serviceMonitor:
-    enabled: false
-
-# ============================================
-# Hubble Observability Platform
-# ============================================
+# Hubble observability
 hubble:
   enabled: true
-  
   relay:
     enabled: true
-    replicas: 1
-    resources:
-      limits:
-        memory: 256Mi
-      requests:
-        cpu: 50m
-        memory: 128Mi
-  
   ui:
     enabled: true
-    replicas: 1
-    resources:
-      limits:
-        memory: 256Mi
-      requests:
-        cpu: 50m
-        memory: 128Mi
-  
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - port-distribution
-      - icmp
-      - "httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction"
 
-# ============================================
-# Monitor Configuration
-# ============================================
-monitor:
+# AWS-specific options
+# This ensures Cilium properly handles AWS ENIs
+eni:
   enabled: true
+  awsReleaseExcessIPs: true     # Frees unused IPs to prevent exhaustion
+  updateEC2AdapterLimitViaAPI: true
 
-# ============================================
-# Bandwidth Manager (Traffic Shaping)
-# ============================================
-bandwidthManager:
-  enabled: true
-  bbr: true
-
-# ============================================
-# Local Redirect Policy
-# ============================================
-localRedirectPolicy: true
-
-# ============================================
-# Network Policy Enforcement
-# ============================================
-policyEnforcementMode: default
-
-# ============================================
-# Cgroup Configuration
-# ============================================
-cgroup:
-  autoMount:
-    enabled: false
-  hostRoot: /sys/fs/cgroup
-
-# ============================================
-# Node Initialization
-# ============================================
-nodeinit:
-  enabled: false
-
-# ============================================
-# Iptables Configuration
-# ============================================
-installNoConntrackIptablesRules: false
