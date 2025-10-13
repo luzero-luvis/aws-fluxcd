@@ -12,10 +12,8 @@ spegel:
 
 # Enable monitoring
 serviceMonitor:
-  enabled: true
-  labels:
-    grafana_dashboard: "1"
+  enabled: false
 
 # Enable Grafana dashboard
 grafanaDashboard:
-  enabled: true
+  enabled: false 
