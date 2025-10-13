@@ -1,0 +1,21 @@
+# Increase memory limit to prevent excessive cache clearing
+resources:
+  limits:
+    memory: 256Mi
+
+spegel:
+  mirroredRegistries:
+    - https://docker.io
+    - https://registry.k8s.io # Kubernetes components
+    - https://ghcr.io
+    - https://quay.io
+
+# Enable monitoring
+serviceMonitor:
+  enabled: true
+  labels:
+    grafana_dashboard: "1"
+
+# Enable Grafana dashboard
+grafanaDashboard:
+  enabled: true
