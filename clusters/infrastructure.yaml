@@ -18,9 +18,6 @@ spec:
   path: ./infrastructure/controllers/base/gateway-crds
   prune: false
   wait: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
 # ============================================
 # PHASE 2: Basic Infrastructure (No Dependencies)
 # ============================================
@@ -40,9 +37,6 @@ spec:
     namespace: flux-system
   path: ./infrastructure/controllers/base/metrics-server
   prune: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
@@ -64,9 +58,6 @@ spec:
     namespace: flux-system
   path: ./infrastructure/controllers/base/longhorn
   prune: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
   healthChecks:
     - apiVersion: apps/v1
       kind: DaemonSet
@@ -88,9 +79,6 @@ spec:
     namespace: flux-system
   path: ./infrastructure/controllers/base/spegel
   prune: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
 # ============================================
 # PHASE 3: Core Services (Depend on CRDs)
 # ============================================
@@ -112,48 +100,14 @@ spec:
     - name: gateway-crds
   path: ./infrastructure/controllers/base/istio
   prune: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
       name: istiod
       namespace: istio-system
 # ============================================
-# PHASE 3B: External Secrets (Depend on CRDs)
+# PHASE 3B: External Secrets
 # ============================================
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: external-secrets
-  namespace: flux-system
-spec:
-  interval: 10m
-  ref:
-    tag: v0.19.2
-  url: https://github.com/external-secrets/external-secrets
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: external-secrets-crds
-  namespace: flux-system
-spec:
-  interval: 10m
-  retryInterval: 1m
-  timeout: 10m
-  path: ./deploy/crds
-  prune: false
-  wait: true
-  sourceRef:
-    kind: GitRepository
-    name: external-secrets
-    namespace: flux-system
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -168,14 +122,9 @@ spec:
     kind: GitRepository
     name: flux-system
     namespace: flux-system
-  dependsOn:
-    - name: external-secrets-crds
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
   wait: true
-  syncOptions:
-    - CreateNamespace=true
-    - ServerSideApply=true
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
