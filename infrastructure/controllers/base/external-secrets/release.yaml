@@ -10,13 +10,13 @@ spec:
   chart:
     spec:
       chart: external-secrets
-      version: 0.21.0
+      version: 0.18.0
       sourceRef:
         kind: HelmRepository
         name: external-secrets
         namespace: external-secrets
   values:
-    installCRDs: true
+    installCRDs: false
 
   install:
     createNamespace: true
