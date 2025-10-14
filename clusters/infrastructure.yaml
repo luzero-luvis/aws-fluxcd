@@ -1,7 +1,6 @@
 # ============================================
 # PHASE 1: CRDs (Install First, Never Prune)
 # ============================================
-
 # Gateway API CRDs
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -16,10 +15,10 @@ spec:
     kind: GitRepository
     name: flux-system
   path: ./infrastructure/controllers/base/gateway-crds
-  prune: false  # ✅ CHANGED: CRDs must never be pruned
+  prune: false
   wait: true
 ---
-# External Secrets CRDs
+# External Secrets CRDs - Updated to v0.21.0
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -28,7 +27,7 @@ metadata:
 spec:
   interval: 10m
   ref:
-    tag: v0.9.18  # ✅ CHANGED: Use valid version
+    tag: v0.21.0  # ✅ UPDATED: Use stable version compatible with Kubernetes 1.33
   url: https://github.com/external-secrets/external-secrets
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
@@ -39,16 +38,14 @@ metadata:
 spec:
   interval: 10m
   path: ./deploy/crds
-  prune: false  # ✅ CORRECT: Never prune CRDs
+  prune: false
   sourceRef:
     kind: GitRepository
     name: external-secrets
   wait: true
-
 # ============================================
 # PHASE 2: Basic Infrastructure (No Dependencies)
 # ============================================
-
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -64,7 +61,7 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/metrics-server
   prune: true
-  healthChecks:  # ✅ ADDED: Ensure it's ready
+  healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
       name: metrics-server
@@ -84,7 +81,7 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/longhorn
   prune: true
-  healthChecks:  # ✅ ADDED: Critical for storage
+  healthChecks:
     - apiVersion: apps/v1
       kind: DaemonSet
       name: longhorn-manager
@@ -104,11 +101,9 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/spegel
   prune: true
-
 # ============================================
 # PHASE 3: Core Services (Depend on CRDs)
 # ============================================
-
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -123,10 +118,10 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: gateway-crds  # ✅ CORRECT: Must wait for Gateway CRDs
+    - name: gateway-crds
   path: ./infrastructure/controllers/base/istio
   prune: true
-  healthChecks:  # ✅ ADDED: Ensure Istio is ready
+  healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
       name: istiod
@@ -145,11 +140,11 @@ spec:
     kind: GitRepository
     name: flux-system
   dependsOn:
-    - name: external-secrets-crds  # ✅ CORRECT: Wait for CRDs
-    - name: longhorn               # ✅ ADDED: May need persistent storage
+    - name: external-secrets-crds
+    - name: longhorn
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
-  healthChecks:  # ✅ ADDED: Ensure operator is ready
+  healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
       name: external-secrets
