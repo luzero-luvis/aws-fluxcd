@@ -38,14 +38,26 @@ spec:
     webhook:
       enabled: true
       port: 10250
+    
+    # Ensure CRDs use the correct stored version
+    crds:
+      createClusterExternalSecret: true
+      createClusterSecretStore: true
+      createPushSecret: true
+      conversion:
+        enabled: true
       
   install:
     createNamespace: true
     crds: Create
+    remediation:
+      retries: 3
     
   upgrade:
     crds: CreateReplace
     timeout: 15m
+    cleanupOnFail: true
     remediation:
-      retries: 2
+      retries: 3
       strategy: rollback
+      remediateLastFailure: true
