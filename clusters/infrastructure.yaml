@@ -109,9 +109,8 @@ metadata:
 spec:
   interval: 10m
   ref:
-    tag: v0.18.0
+    tag: v0.19.2
   url: https://github.com/external-secrets/external-secrets
-
 ---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -125,8 +124,11 @@ spec:
   sourceRef:
     kind: GitRepository
     name: external-secrets
+    namespace: flux-system
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
 ---
-
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -139,10 +141,14 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
+    namespace: flux-system
   dependsOn:
     - name: external-secrets-crds
   path: ./infrastructure/controllers/base/external-secrets
   prune: true
+  syncOptions:
+    - CreateNamespace=true
+    - ServerSideApply=true
   healthChecks:
     - apiVersion: apps/v1
       kind: Deployment
