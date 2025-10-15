@@ -10,46 +10,19 @@ spec:
   chart:
     spec:
       chart: external-secrets
-      version: 0.19.2
+      version: 0.19.0
       sourceRef:
         kind: HelmRepository
         name: external-secrets
         namespace: external-secrets
   values:
-    installCRDs: false  # Changed to false since we installed manually
-    
-    replicaCount: 1  # Start with 1 replica
-    
-    serviceAccount:
-      create: true
-    
-    rbac:
-      create: true
-    
-    resources:
-      limits:
-        cpu: 200m
-        memory: 256Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    
-    webhook:
-      port: 10250
-      
-    certController:
-      create: true
-      
+    installCRDs: false
+
   install:
-    createNamespace: false  # Already created
-    crds: Skip  # Skip CRDs since we installed manually
-    remediation:
-      retries: 3
-    
+    createNamespace: true
+
   upgrade:
-    crds: Skip  # Always skip
     timeout: 15m
-    cleanupOnFail: true
     remediation:
-      retries: 3
+      retries: 2
       strategy: rollback

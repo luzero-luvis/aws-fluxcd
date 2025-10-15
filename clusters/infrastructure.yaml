@@ -118,7 +118,7 @@ metadata:
 spec:
   interval: 10m
   ref:
-    tag: v0.19.2  # Latest stable version
+    tag: v0.19.0  # Latest stable version
   url: https://github.com/external-secrets/external-secrets 
 
 --- 
@@ -136,4 +136,20 @@ spec:
   sourceRef:
     kind: GitRepository
     name: external-secrets
-
+--- 
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: external-secrets
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: external-secrets-crds
+  path: ./infrastructure/controllers/base/external-secrets
+  prune: true
