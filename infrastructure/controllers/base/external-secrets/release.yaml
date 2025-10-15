@@ -16,24 +16,23 @@ spec:
         name: external-secrets
         namespace: external-secrets
   values:
-    installCRDs: true
+    installCRDs: false  # Changed to false since we installed manually
     
-    replicaCount: 2
+    replicaCount: 1  # Start with 1 replica
     
     serviceAccount:
       create: true
-      name: external-secrets
     
     rbac:
       create: true
     
     resources:
       limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
         cpu: 100m
         memory: 128Mi
-      requests:
-        cpu: 50m
-        memory: 64Mi
     
     webhook:
       port: 10250
@@ -42,16 +41,15 @@ spec:
       create: true
       
   install:
-    createNamespace: true
-    crds: Create
+    createNamespace: false  # Already created
+    crds: Skip  # Skip CRDs since we installed manually
     remediation:
       retries: 3
     
   upgrade:
-    crds: CreateReplace
+    crds: Skip  # Always skip
     timeout: 15m
     cleanupOnFail: true
     remediation:
       retries: 3
       strategy: rollback
-      remediateLastFailure: true
