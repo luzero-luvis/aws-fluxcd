@@ -1,0 +1,78 @@
+namespace: "kube-system"
+
+image:
+  repository: registry.k8s.io/provider-aws/cloud-controller-manager
+  tag: v1.34.0
+
+nameOverride: "aws-cloud-controller-manager"
+
+clusterName: "kubernetes"
+
+region: "us-east-1"
+
+nodeSelector:
+  node-role.kubernetes.io/control-plane: ""
+
+serviceAccount:
+  create: true
+  name: cloud-controller-manager
+
+rbac:
+  create: true
+
+credentials:
+  create: false
+  secretName: aws-credentials
+  key: credentials
+
+# Pod resource requests
+resources:
+  requests:
+    cpu: 200m
+    memory: 300Mi
+  limits:
+    cpu: 500m
+    memory: 500Mi
+
+# Environment variables from secret
+env:
+  - name: AWS_REGION
+    value: "us-east-1"
+  - name: AWS_ACCESS_KEY_ID
+    valueFrom:
+      secretKeyRef:
+        name: aws-credentials
+        key: access_key
+  - name: AWS_SECRET_ACCESS_KEY
+    valueFrom:
+      secretKeyRef:
+        name: aws-credentials
+        key: secret_key
+
+# Pod tolerations for control plane nodes
+tolerations:
+  - key: node.cloudprovider.kubernetes.io/uninitialized
+    value: "true"
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/master
+    effect: NoSchedule
+  - key: node-role.kubernetes.io/control-plane
+    effect: NoSchedule
+
+# DNS policy
+dnsPolicy: Default
+
+# Security context
+securityContext: {}
+
+podSecurityContext: {}
+
+podAnnotations: {}
+
+# Controller arguments
+args:
+  - --cloud-provider=aws
+  - --allocate-node-cidrs=true
+  - --configure-cloud-routes=false
+  - --controllers=cloud-node,cloud-node-lifecycle,service
+  - --v=2

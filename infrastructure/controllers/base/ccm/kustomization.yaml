@@ -1,6 +1,23 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+namespace: kube-system
+
 resources:
   - namespace.yaml
-  - release.yaml
   - repository.yaml
+  - release.yaml
+
+configMapGenerator:
+  - name: ccm-values
+    files:
+      - values.yaml=values.yaml
+
+configurations:
+  - kustomizeconfig.yaml
+
+nameReference:
+  - kind: ConfigMap
+    version: v1
+    fieldSpecs:
+      - kind: HelmRelease
+        path: /spec/valuesFrom/name
