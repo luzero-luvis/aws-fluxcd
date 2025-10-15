@@ -6,7 +6,7 @@ image:
 
 nameOverride: "aws-cloud-controller-manager"
 
-clusterName: "kubernetes"
+clusterName: "aws-k8s-cluster"
 
 region: "us-east-1"
 
