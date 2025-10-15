@@ -1,0 +1,49 @@
+resources:
+  requests:
+    cpu: 500m
+    memory: 128Mi
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+
+initContainers:
+  - name: velero-plugin-for-aws
+    image: velero/velero-plugin-for-aws:v1.13.0
+    imagePullPolicy: IfNotPresent
+    volumeMounts:
+      - mountPath: /target
+        name: plugins
+
+configuration:
+  backupStorageLocation:
+    # name is the name of the backup storage location where backups should be stored. If a name is not provided,
+    # a backup storage location will be created with the name "default". Optional.
+    - name: default
+      provider: "aws"
+      bucket: "windvista-k8s-backup"
+      # prefix is the directory under which all Velero data should be stored within the bucket. Optional.
+      prefix: prod
+      # default indicates this location is the default backup storage location. Optional.
+      default: true
+      # validationFrequency defines how frequently Velero should validate the object storage. Optional.
+      validationFrequency: "1h"
+      # default to ReadWrite, ReadOnly is used during migrations and restores.
+      accessMode: ReadWrite
+  #      credential:
+  #        name: velero-aws-creds
+  #        key: cloud
+  #      config:
+  #        region: ap-south-1
+  extraEnvVars:
+    - name: TZ
+      value: Asia/Kolkata
+
+credentials:
+  # Whether a secret should be used.
+  useSecret: true
+  existingSecret: "velero-aws-creds"
+
+backupsEnabled: true
+snapshotsEnabled: false
+
+deployNodeAgent: false
