@@ -5,4 +5,4 @@ resources:
   - namespace.yaml
   - repositories.yaml
   - release.yaml
-  #- cluster-secret-store.yaml
+  - cluster-secret-store.yaml
