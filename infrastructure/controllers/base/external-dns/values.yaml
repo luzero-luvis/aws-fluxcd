@@ -11,13 +11,13 @@ env:
         key: DO_TOKEN
 
 domainFilters:
-  - sirpi.co.in
   - sirpify.com
 
 txtPrefix: externaldns-
 
 managedRecordTypes:
   - A
+  - CNAME
 
 #logLevel: debug
 
