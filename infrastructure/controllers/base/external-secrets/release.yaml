@@ -36,16 +36,10 @@ spec:
         memory: 64Mi
     
     webhook:
-      enabled: true
       port: 10250
-    
-    # Ensure CRDs use the correct stored version
-    crds:
-      createClusterExternalSecret: true
-      createClusterSecretStore: true
-      createPushSecret: true
-      conversion:
-        enabled: true
+      
+    certController:
+      create: true
       
   install:
     createNamespace: true
