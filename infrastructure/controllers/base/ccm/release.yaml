@@ -15,7 +15,7 @@ spec:
         namespace: flux-system
   values:
     clusterName: kubernetes
-    region: us-west-2
+    region: us-east-1
     serviceAccount:
       create: true
       name: cloud-controller-manager
