@@ -5,7 +5,7 @@ metadata:
   name: first-api-svc
 spec:
   selector:
-    apps.kubernetes.io/name: first-api
+    app.kubernetes.io/name: first-api
   ports:
     - port: 80
       targetPort: 8000
