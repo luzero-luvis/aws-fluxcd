@@ -2,6 +2,7 @@
 # PHASE 1: CRDs (Install First, Never Prune)
 # ============================================
 # Gateway API CRDs
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -119,9 +120,9 @@ spec:
   interval: 10m
   ref:
     tag: v0.19.0  # Latest stable version
-  url: https://github.com/external-secrets/external-secrets 
+  url: https://github.com/external-secrets/external-secrets
 
---- 
+---
 
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
@@ -136,7 +137,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: external-secrets
---- 
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -168,7 +169,7 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/velero
   prune: true
---- 
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -183,7 +184,7 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/cert-manager
   prune: true
---- 
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -196,9 +197,9 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./infrastructure/controllers/base/external-dns 
+  path: ./infrastructure/controllers/base/external-dns
   prune: true
---- 
+---
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
