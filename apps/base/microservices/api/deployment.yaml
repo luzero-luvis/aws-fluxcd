@@ -51,24 +51,24 @@ spec:
             preStop:
               exec:
                 command: ["/bin/sh", "-c", "sleep 10"]
-          readinessProbe:
-            httpGet:
-              path: /docs
-              port: 8000
-              scheme: HTTP
-            initialDelaySeconds: 15
-            periodSeconds: 30
-            timeoutSeconds: 15
-            failureThreshold: 3
-          livenessProbe:
-            httpGet:
-              path: /docs
-              port: 8000
-              scheme: HTTP
-            initialDelaySeconds: 60
-            periodSeconds: 30
-            timeoutSeconds: 15
-            failureThreshold: 6
+          # readinessProbe:
+          #   httpGet:
+          #     path: /docs
+          #     port: 8000
+          #     scheme: HTTP
+          #   initialDelaySeconds: 15
+          #   periodSeconds: 30
+          #   timeoutSeconds: 15
+          #   failureThreshold: 3
+          # livenessProbe:
+          #   httpGet:
+          #     path: /docs
+          #     port: 8000
+          #     scheme: HTTP
+          #   initialDelaySeconds: 60
+          #   periodSeconds: 30
+          #   timeoutSeconds: 15
+          #   failureThreshold: 6
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
