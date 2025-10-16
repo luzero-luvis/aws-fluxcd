@@ -11,6 +11,8 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
+  depends_on:
+    - name: istio-config
   path: ./apps/base/microservices/api
   prune: true
   healthChecks:
