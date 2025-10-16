@@ -11,7 +11,7 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  path: ./apps/microservices/base/api
+  path: ./apps/base/microservices/api
   prune: true
   healthChecks:
     - apiVersion: apps/v1
