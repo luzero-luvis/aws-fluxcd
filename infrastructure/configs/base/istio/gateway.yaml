@@ -1,0 +1,35 @@
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: micro-gateway
+  namespace: istio-system
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: "ip"
+    service.beta.kubernetes.io/aws-load-balancer-subnets: "subnet-02502b95d1041056e,subnet-04cf33c8f79843ddc,subnet-039e152c40a543e98"
+    external-dns.alpha.kubernetes.io/hostname: "first-api.sirpify.com"
+    external-dns.alpha.kubernetes.io/ttl: "300"
+spec:
+  gatewayClassName: istio
+  listeners:
+    - name: https
+      hostname: "*.sirpify.com"
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: wildcard-tls
+            namespace: certificates
+            kind: Secret
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: http
+      hostname: "*.sirpify.com"
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
