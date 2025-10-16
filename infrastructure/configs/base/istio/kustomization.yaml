@@ -1,5 +1,5 @@
 ---
 apiVerion: kustomize.config.k8s/v1beta1
 kind: Kustomization
-metadata:
+resources:
   - gateway.yaml
