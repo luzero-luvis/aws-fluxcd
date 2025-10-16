@@ -36,7 +36,7 @@ spec:
               app.kubernetes.io/name: first-api
       containers:
         - name: first-api
-          image: luvisjostonj/post-api:dev
+          image: luvisjostonj/post-api:dev@sha256:76844d43c6df67978949d25e83a25ea0b75315f44739441dded3cc8b7a62e57e
           ports:
             - containerPort: 8000
           resources:
