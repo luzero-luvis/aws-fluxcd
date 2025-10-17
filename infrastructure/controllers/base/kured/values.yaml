@@ -1,0 +1,28 @@
+# Essential Kured Configuration
+
+# Kured behavior
+configuration:
+  # How often to check for reboot requirements
+  period: 1h
+
+  # Maintenance window (24h format, leave empty for anytime)
+  startTime: "00:00"
+  endTime: "05:00"
+  timeZone: "Asia/Kolkata"
+
+  # How long to wait for pods to drain before giving up
+  drainTimeout: 5m
+
+# Resource limits
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 32Mi
+# Slack notifications (optional)
+# notifications:
+#  slack:
+#    hookUrl: ""  # Add your Slack webhook URL here
+#    channel: "#infrastructure"
