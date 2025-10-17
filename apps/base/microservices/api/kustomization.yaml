@@ -5,5 +5,5 @@ namespace: micro
 resources:
    - deployment.yaml
    - service.yaml
-   - httproute.yaml
+  #- httproute.yaml
    - namespace.yaml
