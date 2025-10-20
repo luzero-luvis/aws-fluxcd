@@ -1,0 +1,162 @@
+---
+kubeControllerManager:
+  enabled: false
+
+kubeScheduler:
+  enabled: false
+
+kubeEtcd:
+  enabled: false
+
+defaultRules:
+  rules:
+    kubeProxy: false
+
+prometheus:
+  resources:
+    requests:
+      cpu: "1"
+      memory: 2Gi
+    limits:
+      cpu: "2"
+      memory: 4Gi
+
+  prometheusSpec:
+    scrapeInterval: 15s
+    evaluationInterval: 15s
+    podMonitorNamespaceSelector:
+      matchLabels:
+        app.kubernetes.io/component: monitoring
+
+    # Discover all PodMonitors, Probes, PrometheusRules and ServiceMonitors
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+
+    # Storage configuration (your requirement)
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "longhorn"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+    retention: 30d
+    retentionSize: 8GiB
+
+alertmanager:
+  enabled: true
+  useExistingSecret: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  alertmanagerSpec:
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: "longhorn"
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+    # External secret containing alertmanager.yml config
+    configSecret: alertmanager-email-config
+
+    # How long to retain data (default: 120h)
+    retention: 120h
+
+    # External URL for generating correct links in emails
+    externalUrl: "https://grafana.sirpify.com/alertmanager"
+
+    # Route prefix for HTTP handlers (default: /)
+    routePrefix: /
+
+grafana:
+  deploymentStrategy:
+    type: Recreate
+
+  # Disable leaked secrets assertion (required for newer chart versions)
+  assertNoLeakedSecrets: false
+
+  admin:
+    existingSecret: "grafana-admin"
+    userKey: admin-user
+    passwordKey: admin-password
+
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    scrapeTimeout: 25s
+
+  sidecar:
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      # Allow discovery in all namespaces for dashboards
+      searchNamespace: ALL
+      provider:
+        allowUiUpdates: true
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki.monitoring:3100
+          isDefault: false
+          editable: true
+          jsonData:
+            maxLines: 1000
+            derivedFields:
+              - datasourceUid: Loki
+                matcherRegex: "traceID=(\\w+)"
+                name: TraceID
+                url: "${__value.raw}"
+            timeout: 60
+            maxMaxLines: 5000
+          version: 1
+
+  grafana.ini:
+    date_formats:
+      default_week_start: monday
+
+    users:
+      allow_sign_up: false
+      auto_assign_org: true
+
+    server:
+      domain: grafana.sirpify.com
+      root_url: https://grafana.sirpify.com
+
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: "longhorn"
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+    limits:
+      cpu: 500m
+      memory: 1.5Gi
+
+  plugins:
+    - grafana-polystat-panel
+    - redis-datasource
