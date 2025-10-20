@@ -14,10 +14,3 @@ configMapGenerator:
 
 configurations:
   - kustomizeconfig.yaml
-
-nameReference:
-  - kind: ConfigMap
-    version: v1
-    fieldSpecs:
-      - kind: HelmRelease
-        path: /spec/valuesFrom/name
