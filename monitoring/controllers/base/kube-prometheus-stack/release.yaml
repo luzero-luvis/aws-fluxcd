@@ -1,8 +1,7 @@
----
 apiVersion: helm.toolkit.fluxcd.io/v2
 kind: HelmRelease
 metadata:
-  name: kube-promethues-stack
+  name: kube-prometheus-stack
   namespace: monitoring
 spec:
   interval: 30m
@@ -12,20 +11,24 @@ spec:
       version: "77.*"
       interval: 12h
       sourceRef:
-        name: kube-promethues-stack
+        name: kube-prometheus-stack
         kind: HelmRepository
         namespace: monitoring
+
   valuesFrom:
     - kind: ConfigMap
       name: kube-prometheus-stack-values
+
   install:
-    crds: create
+    crds: Create
+
   upgrade:
     crds: CreateReplace
     timeout: 15m
     remediation:
       retries: 2
       strategy: rollback
+
   driftDetection:
     mode: enabled
     ignore:
