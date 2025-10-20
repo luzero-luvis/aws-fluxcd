@@ -42,9 +42,9 @@ prometheus:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 5Gi
+              storage: 1Gi
     retention: 30d
-    retentionSize: 3GiB
+    retentionSize: 1GiB
 
 alertmanager:
   enabled: true
@@ -64,7 +64,7 @@ alertmanager:
           accessModes: ["ReadWriteOnce"]
           resources:
             requests:
-              storage: 3Gi
+              storage: 1Gi
     # External secret containing alertmanager.yml config
     configSecret: alertmanager-email-config
 
