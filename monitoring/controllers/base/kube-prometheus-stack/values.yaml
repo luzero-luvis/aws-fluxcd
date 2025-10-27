@@ -43,7 +43,7 @@ prometheus:
           resources:
             requests:
               storage: 1Gi
-    retention: 30d
+    retention: 3d
     retentionSize: 1GiB
 
 alertmanager:
