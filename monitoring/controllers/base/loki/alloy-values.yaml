@@ -1,0 +1,69 @@
+alloy:
+  configMap:
+    content: |
+      // Discover Kubernetes pods
+      discovery.kubernetes "pods" {
+        role = "pod"
+      }
+
+
+      discovery.relabel "filtered_pods" {
+        targets = discovery.kubernetes.pods.targets
+
+        // Only collect from default namespace
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          regex         = "default"
+          action        = "keep"
+        }
+
+        // Add useful labels
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app"]
+          target_label  = "app"
+        }
+      }
+
+      // Collect logs
+      loki.source.kubernetes "app_logs" {
+        targets    = discovery.relabel.filtered_pods.output
+        forward_to = [loki.process.log_parsing.receiver]
+      }
+
+      // Parse logs
+      loki.process "log_parsing" {
+        forward_to = [loki.write.default.receiver]
+
+        // Parse container runtime logs (CRI format)
+        stage.cri {}
+
+        // Drop healthcheck logs
+        stage.drop {
+          expression = ".*healthz.*"
+        }
+      }
+
+      // Send to Loki
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring:3100/loki/api/v1/push"
+        }
+      }
+
+resources:
+  limits:
+    memory: 256Mi
+
+# Enable monitoring of the Alloy agent itself
+serviceMonitor:
+  enabled: true
