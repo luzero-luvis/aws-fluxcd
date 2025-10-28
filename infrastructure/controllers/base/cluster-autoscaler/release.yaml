@@ -40,7 +40,7 @@ spec:
 
     # AWS region
     extraArgs:
-      aws-region: us-east-1
+      region: us-east-1
       expander: least-waste
       scale-down-unneeded-time: 10m
       scale-down-utilization-threshold: 0.5
