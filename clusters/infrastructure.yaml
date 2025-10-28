@@ -110,7 +110,6 @@ spec:
 # PHASE 3B: External Secrets
 # ============================================
 ---
-
 apiVersion: source.toolkit.fluxcd.io/v1
 kind: GitRepository
 metadata:
@@ -119,11 +118,10 @@ metadata:
 spec:
   interval: 10m
   ref:
-    tag: v0.19.0  # Latest stable version
+    tag: v0.19.0 # Latest stable version
   url: https://github.com/external-secrets/external-secrets
 
 ---
-
 apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
@@ -133,7 +131,7 @@ spec:
   interval: 10m
   path: ./deploy/crds
   prune: false
-  force: true  # Add this
+  force: true # Add this
   sourceRef:
     kind: GitRepository
     name: external-secrets
@@ -228,4 +226,19 @@ spec:
     kind: GitRepository
     name: flux-system
   path: ./infrastructure/controllers/base/kured
+  prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: cluster-autoscaler
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./infrastructure/controllers/base/cluster-autoscaler
   prune: true
