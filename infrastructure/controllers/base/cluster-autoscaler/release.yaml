@@ -20,34 +20,37 @@ spec:
       retries: 3
 
   values:
+    # === AWS Provider ===
     cloudProvider: aws
+    awsRegion: us-east-1 # ← OFFICIAL HELM VALUE
 
-    # Image for Kubernetes 1.33
+    # === Image ===
     image:
       repository: registry.k8s.io/autoscaling/cluster-autoscaler
       tag: v1.33.2
 
-    # YOUR ASG — ONLY THIS ONE
+    # === Your Auto Scaling Group ===
     autoscalingGroups:
       - name: aws-k8s-cluster-worker-asg
         minSize: 0
         maxSize: 2
 
-    # Disable auto-discovery
+    # === Disable Auto-Discovery ===
     autoDiscovery:
       clusterName: ""
       tags: []
 
-    # AWS region
+    # === Extra Args (CLI flags) ===
     extraArgs:
-      region: us-east-1
       expander: least-waste
       scale-down-unneeded-time: 10m
       scale-down-utilization-threshold: 0.5
       skip-nodes-with-local-storage: false
       skip-nodes-with-system-pods: false
+      v: 4
+      stderrthreshold: info
 
-    # AWS credentials from secret
+    # === AWS Credentials (from ExternalSecret) ===
     extraEnvSecrets:
       AWS_ACCESS_KEY_ID:
         name: aws-credentials
@@ -56,7 +59,7 @@ spec:
         name: aws-credentials
         key: secret-access-key
 
-    # Run on control plane
+    # === Run on Control Plane ===
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
@@ -66,9 +69,10 @@ spec:
                   operator: Exists
 
     tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/control-plane
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
 
+    # === Resources ===
     resources:
       limits:
         cpu: 200m
@@ -77,6 +81,7 @@ spec:
         cpu: 100m
         memory: 200Mi
 
+    # === Observability ===
     podAnnotations:
       prometheus.io/scrape: "true"
       prometheus.io/port: "8085"
