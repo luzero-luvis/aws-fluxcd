@@ -18,17 +18,17 @@ spec:
         namespace: reloader
       interval: 12h
 
-  valueFrom:
-    - kind: configMap
-      name: reloader-values
+    valueFrom:
+      - kind: configMap
+        name: reloader-values
 
-  install:
-    createNamespace: true
-    remediation:
-      retries: 3
+    install:
+      createNamespace: true
+      remediation:
+        retries: 3
 
-  upgrade:
-    timeout: 15m
-    remediation:
-      retries: 3
-      strategy: rollback
+    upgrade:
+      timeout: 15m
+      remediation:
+        retries: 3
+        strategy: rollback
