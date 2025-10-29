@@ -1,0 +1,34 @@
+---
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: reloader
+  namespace: reloader
+spec:
+  releaseName: reloader
+  targetNamespace: reloader
+  interval: 10m
+  chart:
+    spec:
+      chart: reloader
+      version: "1.*"
+      sourceRef:
+        kind: HemlRepository
+        name: stakater
+        namespace: reloader
+      interval: 12h
+
+  valueFrom:
+    - kind: configMap
+      name: reloader-values
+
+  install:
+    createNamespace: true
+    remediation:
+      retries: 3
+
+  upgrade:
+    timeout: 15m
+    remediation:
+      retries: 3
+      strategy: rollback

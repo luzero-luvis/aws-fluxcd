@@ -1,0 +1,28 @@
+---
+reloader:
+  ignoreNamespaces: "kube-system,kube-public,kube-node-lease"
+
+  reloadStrategy: default
+
+  deployment:
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 10m
+      limits:
+        memory: 512Mi
+        cpu: 150m
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    fsGroup: 65534
+
+  containerSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65534
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
