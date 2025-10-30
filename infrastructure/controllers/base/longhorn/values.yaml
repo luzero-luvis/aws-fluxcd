@@ -17,13 +17,13 @@ defaultSettings:
 
   autoSalvage: true
 
-  defaultReplicaCount: 3
+  defaultReplicaCount: 2
 
   storageOverProvisioningPercentage: 100
 
   replicaAutoBalance: "best-effort"
 
 persistence:
-  defaultClassReplicaCount: 3 # StorageClass volumes
+  defaultClassReplicaCount: 2 # StorageClass volumes
   defaultClass: true
   defaultDataLocality: "best-effort"
