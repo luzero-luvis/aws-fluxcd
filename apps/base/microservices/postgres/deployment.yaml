@@ -7,7 +7,7 @@ metadata:
 type: Opaque
 stringData:
   POSTGRES_USER: admin
-  POSTGRES_PASSWORD: admin@123
+  POSTGRES_PASSWORD: yourpassword123
   POSTGRES_DB: mydb
 ---
 apiVersion: apps/v1
@@ -51,6 +51,8 @@ spec:
                 - pg_isready
                 - -U
                 - admin
+                - -d
+                - mydb
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
@@ -59,5 +61,7 @@ spec:
                 - pg_isready
                 - -U
                 - admin
+                - -d
+                - mydb
             initialDelaySeconds: 5
             periodSeconds: 5
