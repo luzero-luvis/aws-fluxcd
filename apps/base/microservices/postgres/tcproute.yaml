@@ -4,9 +4,6 @@ kind: TCPRoute
 metadata:
   name: postgres-tcp-route
   namespace: database
-  annotations:
-    external-dns.alpha.kubernetes.io/hostname: postgres.sirpify.com
-    external-dns.alpha.kubernetes.io/ttl: "300"
 spec:
   parentRefs:
     - name: micro-gateway
