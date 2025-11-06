@@ -1,185 +1,133 @@
 # AWS FluxCD GitOps Repository
 
-This repository contains the GitOps configuration for deploying and managing Kubernetes infrastructure, applications, and monitoring components using FluxCD on AWS. The repository follows a multi-cluster GitOps approach with different layers for infrastructure, configuration, and applications.
+This repository contains the GitOps configuration for deploying and managing a Kubernetes cluster on AWS using FluxCD. It's structured to manage infrastructure, applications, and monitoring components in a declarative way.
 
-## 📁 Project Structure
+## 📁 Directory Structure
 
-```
-aws-fluxcd/
-├── apps/                       # Application definitions
-│   └── base/                   # Base application configurations
-│       └── microservices/      # Microservices applications
-│           └── api/            # API service definitions
-├── clusters/                   # Cluster-level FluxCD configurations
-│   ├── apps.yaml              # Application deployments
-│   ├── configs.yaml           # Infrastructure configurations
-│   ├── infrastructure.yaml    # Infrastructure component definitions
-│   ├── monitoring.yaml        # Monitoring stack definitions
-│   └── flux-system/           # FluxCD system components
-│       ├── gotk-components.yaml
-│       ├── gotk-sync.yaml
-│       └── kustomization.yaml
-├── infrastructure/            # Infrastructure definitions
-│   ├── configs/              # Configuration resources
-│   │   └── base/             # Base configuration definitions
-│   │       ├── cert-manager/
-│   │       ├── certificates/
-│   │       ├── cluster-autosacler/
-│   │       ├── external-secret/
-│   │       └── istio/
-│   └── controllers/          # Infrastructure controllers
-│       └── base/             # Base controller definitions
-│           ├── ccm/          # Cloud Controller Manager
-│           ├── cert-manager/ # Certificate management
-│           ├── cluster-autoscaler/ # Cluster autoscaler
-│           ├── external-dns/ # External DNS controller
-│           ├── external-secrets/ # External secrets controller
-│           ├── gateway-crds/ # Gateway API CRDs
-│           ├── istio/        # Istio service mesh
-│           ├── kured/        # Kubernetes reboot daemon
-│           ├── longhorn/     # Longhorn storage
-│           ├── metrics-server/ # Metrics server
-│           ├── reloader/     # ConfigMap/Secret reloader
-│           ├── spegel/       # Container registry mirror
-│           └── velero/       # Backup and restore
-└── monitoring/               # Monitoring stack definitions
-    ├── configs/             # Monitoring configurations
-    │   └── base/            # Base monitoring configs
-    │       └── grafana/     # Grafana configuration
-    └── controllers/         # Monitoring controllers
-        └── base/            # Base monitoring controller definitions
-            ├── kube-prometheus-stack/ # Prometheus monitoring stack
-            └── loki/        # Loki log aggregation
-```
+*   `apps/`: Contains the Kubernetes manifests for your applications.
+    *   `base/microservices/api/`: A sample API microservice.
+*   `clusters/`: Defines the FluxCD Kustomizations that deploy the entire stack. This is the entry point for FluxCD.
+*   `infrastructure/`: Contains the core infrastructure components for the cluster.
+    *   `configs/`: Configurations for the infrastructure components (e.g., certificates, gateways).
+    *   `controllers/`: The infrastructure components themselves (e.g., Istio, Velero).
+*   `monitoring/`: Contains the monitoring stack.
+    *   `configs/`: Configurations for the monitoring components (e.g., Grafana dashboards).
+    *   `controllers/`: The monitoring components themselves (e.g., Prometheus, Loki).
 
-## 🚀 Overview
+## 🚀 Core Infrastructure
 
-This GitOps repository is organized into three main layers:
+The following components are deployed from the `infrastructure/controllers/base/` directory:
 
-### 1. Infrastructure Layer (`infrastructure/`)
-Contains all the infrastructure components required to run applications on Kubernetes, including:
-- **CRDs**: Gateway API and other custom resource definitions
-- **Storage**: Longhorn for persistent storage
-- **Networking**: Istio service mesh, External DNS
-- **Security**: Cert Manager, External Secrets
-- **Observability**: Metrics server, monitoring components
-- **Operations**: Cluster autoscaler, Kured, Velero backups
+### Velero
 
-### 2. Configuration Layer (`infrastructure/configs/`)
-Holds configuration resources that are applied to the cluster:
-- Certificate configurations
-- Istio configurations
-- External secret definitions
-- Cert Manager configurations
+*   **Purpose**: Velero is used for backing up and restoring your Kubernetes cluster resources and persistent volumes.
+*   **Configuration (`values.yaml`)**:
+    *   **Provider**: AWS (`provider: "aws"`)
+    *   **Bucket**: `backup-velero-k8s`
+    *   **Prefix**: `prod`
+    *   **Backup Storage Location**: A default backup storage location is configured to use AWS S3.
+    *   **Plugins**: The AWS plugin is enabled.
+    *   **Credentials**: Velero is configured to use a Kubernetes secret named `velero-aws-creds` which is created by `external-secrets` from Vault.
 
-### 3. Application Layer (`apps/`)
-Contains application deployments:
-- **Microservices**: Application definitions for microservices architecture
-- **API services**: Backend API service definitions
+### Longhorn
 
-### 4. Monitoring Layer (`monitoring/`)
-Comprehensive monitoring stack:
-- **Prometheus**: Metrics collection with kube-prometheus-stack
-- **Grafana**: Visualization and dashboards
-- **Loki**: Log aggregation and storage
+*   **Purpose**: Longhorn provides persistent storage for your stateful applications.
+*   **Configuration (`values.yaml`)**:
+    *   **Default Replica Count**: 2 (`defaultReplicaCount: 2`)
+    *   **Storage Over Provisioning**: 100% (`storageOverProvisioningPercentage: 100`)
+    *   **Node Down Pod Deletion Policy**: `delete-both-statefulset-and-deployment-pod`
+    *   **Default Class**: Longhorn is configured as the default storage class.
 
-## 📋 Cluster Deployments
+### Istio
 
-The `clusters/` directory contains FluxCD Kustomization resources that define what gets deployed to the cluster:
+*   **Purpose**: Istio is a service mesh that provides traffic management, security, and observability for your microservices.
+*   **Configuration (`values.yaml`)**:
+    *   **Gateway API**: Enabled (`PILOT_ENABLE_GATEWAY_API: true`)
+    *   **Tracing**: Enabled (`telemetry.v2.enabled: true`)
+    *   **Ingress Gateway**: An Istio ingress gateway is configured as a LoadBalancer service.
 
-### `apps.yaml`
-- Deploys microservices applications to the cluster
-- Defines health checks for application deployments
-- Sets up dependencies between services
+### cert-manager
 
-### `configs.yaml`
-- Manages infrastructure configurations
-- Configures external secrets
-- Sets up certificate management
-- Configures Istio service mesh
+*   **Purpose**: cert-manager automates the management of TLS certificates.
+*   **Configuration (`values.yaml`)**:
+    *   **Gateway API**: Enabled (`enableGatewayAPI: true`)
+    *   **ClusterIssuer**: A `ClusterIssuer` named `letsencrypt-production-wildcard` is configured to issue wildcard certificates for `sirpify.com` using Let's Encrypt and DigitalOcean for DNS-01 challenges.
 
-### `infrastructure.yaml`
-- Organized in phases for proper deployment order:
-  - **Phase 1**: CRDs (Gateway API)
-  - **Phase 2**: Basic infrastructure (metrics server, storage, registry mirror)
-  - **Phase 3**: Core services (Istio, External Secrets, Cert Manager, etc.)
+### ExternalDNS
 
-### `monitoring.yaml`
-- Sets up the complete monitoring stack
-- Deploys Prometheus with kube-prometheus-stack
-- Configures Grafana with dashboards
-- Installs Loki for log aggregation
+*   **Purpose**: ExternalDNS automatically manages DNS records for your services.
+*   **Configuration (`values.yaml`)**:
+    *   **Provider**: DigitalOcean (`provider: digitalocean`)
+    *   **Domain Filter**: `sirpify.com`
+    *   **Sources**: It watches Services, Ingresses, and Gateway HTTPRoutes.
 
-## 🔧 Infrastructure Components
+### External Secrets
 
-### Storage & Networking
-- **Longhorn**: Distributed storage solution for Kubernetes
-- **Istio**: Service mesh for traffic management, security, and observability
-- **External DNS**: Automatic DNS record management
+*   **Purpose**: This controller fetches secrets from external secret stores (in this case, Vault) and makes them available as Kubernetes Secrets.
+*   **Configuration**:
+    *   A `ClusterSecretStore` named `vault-backend` is configured to connect to a Vault instance at `https://vault-lab.sirpify.com`.
 
-### Security & Certificates
-- **Cert Manager**: Automatic certificate management
-- **External Secrets**: Integration with external secret stores
-- **CCM (Cloud Controller Manager)**: AWS-specific cloud integration
+### Cluster Autoscaler
 
-### Operations & Monitoring
-- **Cluster Autoscaler**: Automatic node scaling
-- **Metrics Server**: Resource metrics for HPA
-- **Kured**: Automatic node rebooting for security updates
-- **Velero**: Backup and disaster recovery
-- **Reloader**: Automatic deployment restarts on ConfigMap/Secret changes
+*   **Purpose**: Automatically adjusts the number of nodes in your cluster.
+*   **Configuration**:
+    *   **Cloud Provider**: AWS (`cloudProvider: aws`)
+    *   **Auto Scaling Group**: `aws-k8s-cluster-worker-asg`
+    *   **Min/Max Size**: 0 to 2 nodes.
 
-### Additional Tools
-- **Spegel**: Container registry mirror for improved performance
-- **External DNS**: Automatic DNS management for services
+### Kured
 
-## 📊 Monitoring Stack
+*   **Purpose**: Kured (Kubernetes Reboot Daemon) safely reboots nodes when required by the underlying OS.
+*   **Configuration (`values.yaml`)**:
+    *   **Schedule**: Runs every hour between 00:00 and 05:00 Asia/Kolkata time.
 
-### Prometheus Ecosystem
-- **Kube-Prometheus-Stack**: Complete monitoring solution with Prometheus, Alertmanager, and Grafana
-- **Grafana**: Pre-configured dashboards for cluster and application monitoring
-- **Loki**: Log aggregation system for Kubernetes workloads
+### Other Infrastructure Components
 
-## 🚀 Getting Started
+*   **`ccm`**: AWS Cloud Controller Manager, for integrating with AWS APIs.
+*   **`gateway-crds`**: Installs the Kubernetes Gateway API CRDs.
+*   **`metrics-server`**: Provides resource metrics for autoscaling.
+*   **`reloader`**: Automatically restarts pods when their ConfigMaps or Secrets are updated.
+*   **`spegel`**: A distributed container registry mirror to speed up image pulls.
 
-### Prerequisites
-- Kubernetes cluster
-- FluxCD installed
-- AWS credentials configured
-- Git repository access
+## 📊 Monitoring
 
-### Initial Setup
-1. Bootstrap FluxCD in your cluster
-2. Point FluxCD to this repository
-3. Apply the cluster configurations:
-   - Infrastructure (in phases)
-   - Configurations
-   - Monitoring
-   - Applications
+The monitoring stack is deployed from the `monitoring/controllers/base/` directory.
 
-### Deployment Order
-The infrastructure components are designed to be deployed in phases:
-1. **CRDs** - Custom Resource Definitions
-2. **Basic Infrastructure** - Core infrastructure components
-3. **Core Services** - Service mesh, secrets, certificates
-4. **Monitoring** - Complete monitoring stack
-5. **Applications** - Business applications
+### Kube Prometheus Stack
 
-## 🤝 Contributing
+*   **Purpose**: A full monitoring stack including Prometheus, Grafana, and Alertmanager.
+*   **Configuration (`values.yaml`)**:
+    *   **Prometheus**:
+        *   **Storage**: Uses Longhorn for persistent storage with a 1Gi request.
+        *   **Retention**: 1 day.
+    *   **Grafana**:
+        *   **Persistence**: Enabled with a 4Gi Longhorn volume.
+        *   **Admin Credentials**: Managed by `external-secrets` from Vault.
+        *   **Plugins**: `grafana-polystat-panel` and `redis-datasource` are installed.
+        *   **Datasources**: A Loki datasource is pre-configured.
+    *   **Alertmanager**: Enabled and configured to use an external secret for its configuration.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test your changes in a development environment
-5. Submit a pull request
+### Loki
 
-## 📄 License
+*   **Purpose**: Loki is a log aggregation system.
+*   **Configuration (`values.yaml`)**:
+    *   **Deployment Mode**: `SingleBinary`
+    *   **Storage**: Uses a 500m Longhorn volume.
+*   **Alloy**: The `alloy` component is Grafana Alloy, which is used to collect and process logs before sending them to Loki.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+## 📦 Applications
 
-## ⚠️ Notes
+The `apps/` directory contains a sample microservice:
 
-- Always verify changes in a development environment before applying to production
-- Monitor cluster resources when adding new components
-- Keep FluxCD components updated for security
-- Regular backup schedules should be in place
+*   **`first-api`**: A simple API with a Deployment and Service. An `HTTPRoute` is also defined to expose it through the Istio gateway.
+
+## ⚙️ FluxCD Deployment
+
+The `clusters/` directory is the heart of the FluxCD deployment. The YAML files in this directory are `Kustomization` resources that tell FluxCD what to deploy and in what order.
+
+*   **`infrastructure.yaml`**: Deploys the core infrastructure components in phases to ensure dependencies are met.
+*   **`configs.yaml`**: Deploys the configurations for the infrastructure components.
+*   **`monitoring.yaml`**: Deploys the monitoring stack.
+*   **`apps.yaml`**: Deploys the sample application.
+
+This structured approach allows for a clear separation of concerns and ensures that the cluster is always in the state defined in this repository.
