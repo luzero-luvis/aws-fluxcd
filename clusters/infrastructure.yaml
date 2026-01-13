@@ -1,259 +1,260 @@
-# ============================================
-# PHASE 1: CRDs (Install First, Never Prune)
-# ============================================
-# Gateway API CRDs
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: gateway-crds
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  path: ./infrastructure/controllers/base/gateway-crds
-  prune: false
-  wait: true
-# ============================================
-# PHASE 2: Basic Infrastructure (No Dependencies)
-# ============================================
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: metrics-server
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  path: ./infrastructure/controllers/base/metrics-server
-  prune: true
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: metrics-server
-      namespace: kube-system
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: longhorn
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  path: ./infrastructure/controllers/base/longhorn
-  prune: true
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: DaemonSet
-      name: longhorn-manager
-      namespace: longhorn-system
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: spegel
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  path: ./infrastructure/controllers/base/spegel
-  prune: true
-# ============================================
-# PHASE 3: Core Services (Depend on CRDs)
-# ============================================
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: istio
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-    namespace: flux-system
-  dependsOn:
-    - name: gateway-crds
-  path: ./infrastructure/controllers/base/istio
-  prune: true
-  healthChecks:
-    - apiVersion: apps/v1
-      kind: Deployment
-      name: istiod
-      namespace: istio-system
-# ============================================
-# PHASE 3B: External Secrets
-# ============================================
----
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
-metadata:
-  name: external-secrets
-  namespace: flux-system
-spec:
-  interval: 10m
-  ref:
-    tag: v0.19.0 # Latest stable version
-  url: https://github.com/external-secrets/external-secrets
+# # ============================================
+# # PHASE 1: CRDs (Install First, Never Prune)
+# # ============================================
+# # Gateway API CRDs
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: gateway-crds
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   path: ./infrastructure/controllers/base/gateway-crds
+#   prune: false
+#   wait: true
+# # ============================================
+# # PHASE 2: Basic Infrastructure (No Dependencies)
+# # ============================================
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: metrics-server
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   path: ./infrastructure/controllers/base/metrics-server
+#   prune: true
+#   healthChecks:
+#     - apiVersion: apps/v1
+#       kind: Deployment
+#       name: metrics-server
+#       namespace: kube-system
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: longhorn
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   path: ./infrastructure/controllers/base/longhorn
+#   prune: true
+#   healthChecks:
+#     - apiVersion: apps/v1
+#       kind: DaemonSet
+#       name: longhorn-manager
+#       namespace: longhorn-system
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: spegel
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   path: ./infrastructure/controllers/base/spegel
+#   prune: true
+# # ============================================
+# # PHASE 3: Core Services (Depend on CRDs)
+# # ============================================
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: istio
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#     namespace: flux-system
+#   dependsOn:
+#     - name: gateway-crds
+#   path: ./infrastructure/controllers/base/istio
+#   prune: true
+#   healthChecks:
+#     - apiVersion: apps/v1
+#       kind: Deployment
+#       name: istiod
+#       namespace: istio-system
+# # ============================================
+# # PHASE 3B: External Secrets
+# # ============================================
+# ---
+# apiVersion: source.toolkit.fluxcd.io/v1
+# kind: GitRepository
+# metadata:
+#   name: external-secrets
+#   namespace: flux-system
+# spec:
+#   interval: 10m
+#   ref:
+#     tag: v0.19.0 # Latest stable version
+#   url: https://github.com/external-secrets/external-secrets
 
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: external-secrets-crds
-  namespace: flux-system
-spec:
-  interval: 10m
-  path: ./deploy/crds
-  prune: false
-  force: true # Add this
-  sourceRef:
-    kind: GitRepository
-    name: external-secrets
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: external-secrets
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  dependsOn:
-    - name: external-secrets-crds
-  path: ./infrastructure/controllers/base/external-secrets
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: velero
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/velero
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: cert-manager
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/cert-manager
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: external-dns
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/external-dns
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: ccm
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/ccm
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: kured
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/kured
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: cluster-autoscaler
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/cluster-autoscaler
-  prune: true
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: reloader
-  namespace: flux-system
-spec:
-  interval: 1h
-  retryInterval: 1m
-  timeout: 5m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  path: ./infrastructure/controllers/base/reloader
-  prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: external-secrets-crds
+#   namespace: flux-system
+# spec:
+#   interval: 10m
+#   path: ./deploy/crds
+#   prune: false
+#   force: true # Add this
+#   sourceRef:
+#     kind: GitRepository
+#     name: external-secrets
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: external-secrets
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   dependsOn:
+#     - name: external-secrets-crds
+#   path: ./infrastructure/controllers/base/external-secrets
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: velero
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/velero
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: cert-manager
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/cert-manager
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: external-dns
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/external-dns
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: ccm
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/ccm
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: kured
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/kured
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: cluster-autoscaler
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/cluster-autoscaler
+#   prune: true
+# ---
+# apiVersion: kustomize.toolkit.fluxcd.io/v1
+# kind: Kustomization
+# metadata:
+#   name: reloader
+#   namespace: flux-system
+# spec:
+#   interval: 1h
+#   retryInterval: 1m
+#   timeout: 5m
+#   sourceRef:
+#     kind: GitRepository
+#     name: flux-system
+#   path: ./infrastructure/controllers/base/reloader
+#   prune: true
+ 
