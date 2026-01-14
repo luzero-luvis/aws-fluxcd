@@ -4,6 +4,8 @@ resources:
     memory: 256Mi
 
 spegel:
+  # Use Talos-specific containerd registry config path
+  containerdRegistryConfigPath: "/etc/cri/conf.d/hosts"
   mirroredRegistries:
     - https://docker.io
     - https://registry.k8s.io # Kubernetes components
@@ -12,8 +14,10 @@ spegel:
 
 # Enable monitoring
 serviceMonitor:
-  enabled: false
+  enabled: true
+  labels:
+    grafana_dashboard: "1"
 
 # Enable Grafana dashboard
 grafanaDashboard:
-  enabled: false 
+  enabled: true
