@@ -83,29 +83,24 @@ spec:
 # # ============================================
 # # PHASE 3: Core Services (Depend on CRDs)
 # # ============================================
-# ---
-# apiVersion: kustomize.toolkit.fluxcd.io/v1
-# kind: Kustomization
-# metadata:
-#   name: istio
-#   namespace: flux-system
-# spec:
-#   interval: 1h
-#   retryInterval: 1m
-#   timeout: 5m
-#   sourceRef:
-#     kind: GitRepository
-#     name: flux-system
-#     namespace: flux-system
-#   dependsOn:
-#     - name: gateway-crds
-#   path: ./infrastructure/controllers/base/istio
-#   prune: true
-#   healthChecks:
-#     - apiVersion: apps/v1
-#       kind: Deployment
-#       name: istiod
-#       namespace: istio-system
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: envoy-gateway
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+    namespace: flux-system
+  dependsOn:
+    - name: gateway-crds
+  path: ./infrastructure/controllers/base/envoy-gateway
+  prune: true
 # # ============================================
 # # PHASE 3B: External Secrets
 # # ============================================
@@ -257,4 +252,3 @@ spec:
     name: flux-system
   path: ./infrastructure/controllers/base/reloader
   prune: true
-
