@@ -54,7 +54,7 @@ spec:
                 - -U
                 - admin
                 - -d
-                - mydb
+                - dev
             initialDelaySeconds: 5
             periodSeconds: 5
       volumes:
