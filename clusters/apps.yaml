@@ -11,7 +11,5 @@ spec:
   sourceRef:
     kind: GitRepository
     name: flux-system
-  dependsOn:
-    - name: istio-config
   path: ./apps/base/microservices/postgres
   prune: true
