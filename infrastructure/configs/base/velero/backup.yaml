@@ -1,0 +1,31 @@
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: cluster-state-daily-dev
+  namespace: velero
+spec:
+  schedule: "0 0 * * *" # Daily at 12 AM
+  template:
+    includedNamespaces:
+      - "*"
+    excludedResources:
+      - persistentvolumes
+      - persistentvolumeclaims
+      - volumesnapshots
+      - volumesnapshotcontents
+      - backuptargets.longhorn.io
+      - backupvolumes.longhorn.io
+      - backups.longhorn.io
+      - nodes.longhorn.io
+      - volumes.longhorn.io
+      - engines.longhorn.io
+      - replicas.longhorn.io
+      - backingimagedatasources.longhorn.io
+      - backingimagemanagers.longhorn.io
+      - backingimages.longhorn.io
+      - sharemanagers.longhorn.io
+      - instancemanagers.longhorn.io
+      - engineimages.longhorn.io
+    storageLocation: default
+    ttl: 168h # 7 days retention
+    includeClusterResources: true

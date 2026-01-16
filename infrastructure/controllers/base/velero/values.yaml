@@ -20,7 +20,7 @@ configuration:
     # a backup storage location will be created with the name "default". Optional.
     - name: default
       provider: "aws"
-      bucket: "backup-velero-k8s"
+      bucket: "backup-velero-k8s-talos"
       # prefix is the directory under which all Velero data should be stored within the bucket. Optional.
       prefix: prod
       # default indicates this location is the default backup storage location. Optional.
