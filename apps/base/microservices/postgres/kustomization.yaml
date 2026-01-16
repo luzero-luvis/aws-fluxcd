@@ -6,9 +6,10 @@ namespace: database
 
 resources:
   - namespace.yaml
+  - pvc.yaml
+  - secret.yaml
   - deployment.yaml
   - service.yaml
-  - tcproute.yaml
 
 commonLabels:
   app.kubernetes.io/name: postgres

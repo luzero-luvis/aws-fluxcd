@@ -5,4 +5,3 @@ metadata:
   name: database
   labels:
     app.kubernetes.io/environment: database
-    istio-injection: enabled
