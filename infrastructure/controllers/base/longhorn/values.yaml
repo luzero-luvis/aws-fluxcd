@@ -23,6 +23,15 @@ defaultSettings:
 
   replicaAutoBalance: "best-effort"
 
+  recurringBackupJobConcurrency: 2
+
+  backupCompressionMethod: "gzip"
+
+  v2DataEngine: false
+
+defaultBackupStore:
+  backupTarget: "s3://longhorn-backup-talos@us-east-1/talos/"
+  backupTargetCredentialSecret: "longhorn-backup-secret"
 persistence:
   defaultClassReplicaCount: 2 # StorageClass volumes
   defaultClass: true

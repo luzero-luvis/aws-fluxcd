@@ -1,0 +1,16 @@
+apiVersion: longhorn.io/v1beta2
+kind: RecurringJob
+metadata:
+  name: volume-backup-daily
+  namespace: longhorn-system
+spec:
+  cron: "*/2 * * * *"
+  task: "backup"
+  groups:
+    - default
+  retain: 3 # Keep 3 daily backups
+  concurrency: 2
+  labels:
+    backup-type: "min"
+  parameters:
+    full-backup-interval: "7"
