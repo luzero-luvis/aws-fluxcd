@@ -140,7 +140,7 @@ grafana:
       auto_assign_org: true
 
     server:
-      domain: grafana.sirpify.com
+      domain: grafana.luzero.online
       root_url: https://grafana.luzero.online
 
   persistence:
