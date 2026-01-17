@@ -11,10 +11,18 @@ spec:
       name: letsencrypt-production-wildcard
     solvers:
       - dns01:
-          digitalocean:
-            tokenSecretRef:
-              name: digitalocean-dns
-              key: access-token
+          webhook:
+            groupName: acme.mycompany.com
+            solverName: godaddy
+            config:
+              apiKeySecretRef:
+                name: godaddy-dns
+                key: api-key
+              apiSecretSecretRef:
+                name: godaddy-dns
+                key: api-secret
+              production: true
+              ttl: 600
         selector:
           dnsZones:
-            - "sirpify.com"
+            - "luzero.online"

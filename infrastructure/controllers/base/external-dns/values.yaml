@@ -1,28 +1,31 @@
 provider:
-  name: digitalocean
+  name: godaddy
 
 policy: upsert-only
 
 env:
-  - name: DO_TOKEN
+  - name: GODADDY_API_KEY
     valueFrom:
       secretKeyRef:
-        name: do-token
-        key: DO_TOKEN
+        name: godaddy-dns
+        key: api-key
+  - name: GODADDY_API_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: godaddy-dns
+        key: api-secret
 
 domainFilters:
-  - sirpify.com
+  - luzero.online
 
 txtPrefix: externaldns-
 
 managedRecordTypes:
   - A
   - CNAME
-
 #logLevel: debug
 
 interval: 1h
-
 sources:
   - service
   - ingress

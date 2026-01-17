@@ -2,5 +2,5 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-   - clusterissuer-production.yaml
-   - digitalocean-secret.yaml
+  - clusterissuer-production.yaml
+  - godaddy-secret.yaml
