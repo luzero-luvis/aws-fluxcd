@@ -1,19 +1,14 @@
 provider:
-  name: godaddy
+  name: cloudflare
 
 policy: upsert-only
 
 env:
-  - name: GODADDY_API_KEY
+  - name: CF_API_TOKEN
     valueFrom:
       secretKeyRef:
-        name: godaddy-dns
-        key: api-key
-  - name: GODADDY_API_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: godaddy-dns
-        key: api-secret
+        name: cloudflare-api-token
+        key: api-token
 
 domainFilters:
   - luzero.online
@@ -24,7 +19,6 @@ managedRecordTypes:
   - A
   - CNAME
 #logLevel: debug
-
 interval: 1h
 sources:
   - service

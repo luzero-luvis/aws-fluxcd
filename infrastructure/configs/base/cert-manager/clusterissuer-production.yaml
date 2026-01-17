@@ -11,18 +11,10 @@ spec:
       name: letsencrypt-production-wildcard
     solvers:
       - dns01:
-          webhook:
-            groupName: acme.mycompany.com
-            solverName: godaddy
-            config:
-              apiKeySecretRef:
-                name: godaddy-dns
-                key: api-key
-              apiSecretSecretRef:
-                name: godaddy-dns
-                key: api-secret
-              production: true
-              ttl: 600
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
         selector:
           dnsZones:
             - "luzero.online"
