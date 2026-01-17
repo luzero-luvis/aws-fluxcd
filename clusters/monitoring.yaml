@@ -13,23 +13,24 @@ spec:
     name: flux-system
   path: ./monitoring/controllers/base/kube-prometheus-stack
   prune: true
-# ---
-# apiVersion: kustomize.toolkit.fluxcd.io/v1
-# kind: Kustomization
-# metadata:
-#   name: grafana-config
-#   namespace: flux-system
-# spec:
-#   interval: 1h
-#   retryInterval: 1m
-#   timeout: 5m
-#   sourceRef:
-#     kind: GitRepository
-#     name: flux-system
-#   dependsOn:
-#     - name: kube-prometheus-stack
-#   path: ./monitoring/configs/base/grafana
-#   prune: true
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: grafana-config
+  namespace: flux-system
+spec:
+  interval: 1h
+  retryInterval: 1m
+  timeout: 5m
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  dependsOn:
+    - name: kube-prometheus-stack
+    - name: envoy-gateway-config
+  path: ./monitoring/configs/base/grafana
+  prune: true
 
 # ---
 # apiVersion: kustomize.toolkit.fluxcd.io/v1

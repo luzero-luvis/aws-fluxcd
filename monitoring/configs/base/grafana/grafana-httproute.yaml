@@ -6,12 +6,12 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: micro-gateway
+    - name: api-gateway
       kind: Gateway
       sectionName: https
-      namespace: istio-system
+      namespace: envoy-gateway-system
   hostnames:
-    - "grafana.sirpify.com"
+    - "grafana.luzero.online"
   rules:
     - matches:
         - path:
@@ -28,12 +28,12 @@ metadata:
   namespace: monitoring
 spec:
   parentRefs:
-    - name: micro-gateway
+    - name: api-gateway
       kind: Gateway
       sectionName: http
-      namespace: istio-system
+      namespace: envoy-gateway-system
   hostnames:
-    - "grafana.sirpify.com"
+    - "grafana.luzero.online"
   rules:
     - matches:
         - path:

@@ -74,7 +74,7 @@ alertmanager:
     retention: 120h
 
     # External URL for generating correct links in emails
-    externalUrl: "https://grafana.sirpify.com/alertmanager"
+    externalUrl: "https://grafana.luzero.online/alertmanager"
 
     # Route prefix for HTTP handlers (default: /)
     routePrefix: /
@@ -141,7 +141,7 @@ grafana:
 
     server:
       domain: grafana.sirpify.com
-      root_url: https://grafana.sirpify.com
+      root_url: https://grafana.luzero.online
 
   persistence:
     enabled: true
